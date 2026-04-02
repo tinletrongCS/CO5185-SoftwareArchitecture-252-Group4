@@ -1,9 +1,11 @@
 package com.irms.ordering_service.service;
 
+import com.irms.ordering_service.config.RabbitMQConfig;
 import com.irms.ordering_service.entity.OrderEntity;
 import com.irms.ordering_service.repository.OrderRepository;
 import com.irms.ordering_service.dto.OrderRequestDTO;
 import com.irms.ordering_service.dto.OrderResponseDTO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +16,7 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-
+    private final RabbitTemplate rabbitTemplate;
     @Override
     public OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO) {
         OrderEntity order = new OrderEntity();
@@ -23,7 +25,11 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus("PENDING");
 
         OrderEntity saved = orderRepository.save(order);
-        return toResponseDTO(saved);
+        OrderResponseDTO responseDTO = toResponseDTO(saved);
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY, responseDTO);
+        System.out.println("Đã gửi thông báo đơn hàng mới lên RabbitMQ: " + responseDTO.getId());
+        return responseDTO;
     }
 
     @Override
