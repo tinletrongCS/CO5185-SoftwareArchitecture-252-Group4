@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. Message Broker (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: irms-rabbitmq
+    ports:
+      - "5672:5672"   # Port giao tiếp mặc định
+      - "15672:15672" # Port cho giao diện Web quản lý
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - irms-network
+
+  ordering-service:
+    build:
+      context: ./ordering_service
+    container_name: irms-ordering-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - irms-network
+
+  auth-service:
+    build:
+      context: ./auth_service
+    container_name: irms-auth-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - irms-network
+
+networks:
+  irms-network:
+    driver: bridge

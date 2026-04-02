@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.irms</groupId>
-	<artifactId>ordering-service</artifactId>
+	<artifactId>auth-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<description>Auth Service cho hệ thống IRMS</description>
 	<name/>
-	<description/>
 	<url/>
 	<licenses>
 		<license/>
