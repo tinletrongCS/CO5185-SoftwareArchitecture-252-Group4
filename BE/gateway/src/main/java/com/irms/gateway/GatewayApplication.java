@@ -1,13 +1,11 @@
-package com.irms.auth_service;
+package com.irms.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AuthServiceApplication {
-
+public class GatewayApplication {
     public static void main(String[] args) {
-        SpringApplication.run(AuthServiceApplication.class, args);
+        SpringApplication.run(GatewayApplication.class, args);
     }
-
 }

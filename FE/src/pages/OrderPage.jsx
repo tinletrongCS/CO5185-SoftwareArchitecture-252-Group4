@@ -18,9 +18,9 @@ import {
   ReloadOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
+import { orderApi } from '../services/api'
 
 const { Title } = Typography
-const API_BASE = '/api/orders'
 
 const STATUS_COLORS = {
   PENDING: 'orange',
@@ -39,10 +39,8 @@ function OrderPage() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const res = await fetch(API_BASE)
-      if (!res.ok) throw new Error('Failed to fetch')
-      const data = await res.json()
-      setOrders(data)
+      const res = await orderApi.getAll()
+      setOrders(res.data)
     } catch (err) {
       message.error('Không thể tải danh sách đơn hàng')
     } finally {
@@ -57,12 +55,7 @@ function OrderPage() {
   const handleCreate = async () => {
     try {
       const values = await form.validateFields()
-      const res = await fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      })
-      if (!res.ok) throw new Error('Failed to create')
+      await orderApi.create(values)
       message.success('Tạo đơn hàng thành công')
       setModalOpen(false)
       form.resetFields()
@@ -74,10 +67,7 @@ function OrderPage() {
 
   const handleUpdateStatus = async (id, status) => {
     try {
-      const res = await fetch(`${API_BASE}/${id}/status?value=${status}`, {
-        method: 'PUT',
-      })
-      if (!res.ok) throw new Error('Failed to update')
+      await orderApi.update(id, { status })
       message.success('Cập nhật trạng thái thành công')
       fetchOrders()
     } catch {
@@ -87,8 +77,7 @@ function OrderPage() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to delete')
+      await orderApi.delete(id)
       message.success('Xóa đơn hàng thành công')
       fetchOrders()
     } catch {

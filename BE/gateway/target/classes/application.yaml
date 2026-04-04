@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8083
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=1
+        - id: ordering-service
+          uri: http://ordering-service:8082
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=1
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+            allowedHeaders: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
