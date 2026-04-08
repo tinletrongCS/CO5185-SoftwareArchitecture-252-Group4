@@ -1,0 +1,15 @@
+package com.irms.ordering_service.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderItemResponseDTO {
+    private Long id;
+    private String itemName;
+    private Integer quantity;
+    private Boolean isCompleted;
+}

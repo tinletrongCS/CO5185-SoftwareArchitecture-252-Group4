@@ -1,14 +1,11 @@
 package com.irms.ordering_service.dto;
 
-import lombok.AllArgsConstructor;
+import java.util.List;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class OrderRequestDTO {
 
     private String tableId;
-    private String items;
+    private List<OrderItemRequestDTO> items;
 }

@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "orders")
 @Data
@@ -19,9 +22,15 @@ public class OrderEntity {
     @Column(name = "table_id", nullable = false)
     private String tableId;
 
-    @Column(name = "items_list", nullable = false, columnDefinition = "TEXT")
-    private String itemsList;
-
     @Column(name = "status", nullable = false)
     private String status;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItemEntity> items = new ArrayList<>();
+
+    public void addItem(OrderItemEntity item)
+    {
+        items.add(item);
+        item.setOrder(this);
+    }
 }
