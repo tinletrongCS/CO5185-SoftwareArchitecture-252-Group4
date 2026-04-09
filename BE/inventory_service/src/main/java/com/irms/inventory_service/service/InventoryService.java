@@ -28,9 +28,9 @@ public interface InventoryService {
     InventoryItemResponseDTO getItemById(Long id);
 
     /**
-     * Thêm item mới (admin)
+     * Thêm nhiều items cùng lúc (admin)
      */
-    InventoryItemResponseDTO createItem(InventoryItemRequestDTO dto);
+    List<InventoryItemResponseDTO> createItems(List<InventoryItemRequestDTO> dtos);
 
     /**
      * Cập nhật thông tin item (admin)

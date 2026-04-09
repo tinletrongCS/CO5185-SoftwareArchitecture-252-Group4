@@ -20,8 +20,10 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final RabbitTemplate rabbitTemplate;
 
+    // chỉ lấy những món available hiện lên menu 
     @Override
-    public List<InventoryItemResponseDTO> getMenu() {
+    public List<InventoryItemResponseDTO> getMenu() 
+    {
         return inventoryRepository.findByAvailableTrue()
                 .stream()
                 .map(this::toResponseDTO)
@@ -29,7 +31,8 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public List<InventoryItemResponseDTO> getMenuByCategory(String category) {
+    public List<InventoryItemResponseDTO> getMenuByCategory(String category) 
+    {
         return inventoryRepository.findByCategoryAndAvailableTrue(category)
                 .stream()
                 .map(this::toResponseDTO)
@@ -37,7 +40,8 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public List<InventoryItemResponseDTO> getAllItems() {
+    public List<InventoryItemResponseDTO> getAllItems() 
+    {
         return inventoryRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
@@ -45,32 +49,37 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public InventoryItemResponseDTO getItemById(Long id) {
+    public InventoryItemResponseDTO getItemById(Long id) 
+    {
         InventoryItem item = findOrThrow(id);
         return toResponseDTO(item);
     }
 
     @Override
-    public InventoryItemResponseDTO createItem(InventoryItemRequestDTO dto) {
-        InventoryItem item = new InventoryItem();
-        mapDtoToEntity(dto, item);
-        InventoryItem saved = inventoryRepository.save(item);
+    public List<InventoryItemResponseDTO> createItems(List<InventoryItemRequestDTO> dtos) 
+    {
+        return dtos.stream().map(dto -> {
+            InventoryItem item = new InventoryItem();
+            mapDtoToEntity(dto, item);
+            InventoryItem saved = inventoryRepository.save(item);
 
-        publishEvent(new InventoryChangedEvent(
-                saved.getId(),
-                saved.getName(),
-                saved.getCategory(),
-                0,
-                saved.getQuantity(),
-                saved.getAvailable(),
-                "CREATED"
-        ));
+            publishEvent(new InventoryChangedEvent(
+                    saved.getId(),
+                    saved.getName(),
+                    saved.getCategory(),
+                    0,
+                    saved.getQuantity(),
+                    saved.getAvailable(),
+                    "CREATED"
+            ));
 
-        return toResponseDTO(saved);
+            return toResponseDTO(saved);
+        }).toList();
     }
 
     @Override
-    public InventoryItemResponseDTO updateItem(Long id, InventoryItemRequestDTO dto) {
+    public InventoryItemResponseDTO updateItem(Long id, InventoryItemRequestDTO dto) 
+    {
         InventoryItem item = findOrThrow(id);
         int oldQuantity = item.getQuantity();
 
@@ -111,7 +120,8 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public InventoryItemResponseDTO updateQuantity(Long id, int delta) {
+    public InventoryItemResponseDTO updateQuantity(Long id, int delta) 
+    {
         InventoryItem item = findOrThrow(id);
         int oldQuantity = item.getQuantity();
         int newQuantity = Math.max(0, oldQuantity + delta);
@@ -149,7 +159,8 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new RuntimeException("Inventory item not found: " + id));
     }
 
-    private void mapDtoToEntity(InventoryItemRequestDTO dto, InventoryItem item) {
+    private void mapDtoToEntity(InventoryItemRequestDTO dto, InventoryItem item) 
+    {
         item.setName(dto.getName());
         item.setCategory(dto.getCategory());
         item.setDescription(dto.getDescription());
@@ -169,16 +180,17 @@ public class InventoryServiceImpl implements InventoryService {
                 + " - item #" + event.getItemId() + " (" + event.getItemName() + ")");
     }
 
-    private InventoryItemResponseDTO toResponseDTO(InventoryItem item) {
+    private InventoryItemResponseDTO toResponseDTO(InventoryItem item) 
+    {
         return new InventoryItemResponseDTO(
-                item.getId(),
-                item.getName(),
-                item.getCategory(),
-                item.getDescription(),
-                item.getPrice(),
-                item.getQuantity(),
-                item.getAvailable(),
-                item.getImageUrl()
+            item.getId(),
+            item.getName(),
+            item.getCategory(),
+            item.getDescription(),
+            item.getPrice(),
+            item.getQuantity(),
+            item.getAvailable(),
+            item.getImageUrl()
         );
     }
 }

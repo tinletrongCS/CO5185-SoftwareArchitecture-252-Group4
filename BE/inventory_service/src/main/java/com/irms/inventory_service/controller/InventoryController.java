@@ -40,8 +40,8 @@ public class InventoryController {
     }
 
     @PostMapping("/items")
-    public ResponseEntity<InventoryItemResponseDTO> createItem(@RequestBody InventoryItemRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.createItem(dto));
+    public ResponseEntity<List<InventoryItemResponseDTO>> createItems(@RequestBody List<InventoryItemRequestDTO> dtos) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.createItems(dtos));
     }
 
     @PutMapping("/items/{id}")
