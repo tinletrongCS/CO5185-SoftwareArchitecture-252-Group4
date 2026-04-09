@@ -46,6 +46,24 @@ services:
       - rabbitmq
     networks:
       - irms-network
+  
+  inventory-service:
+    image: eclipse-temurin:21-jdk-jammy
+    container_name: irms-inventory-service
+    ports:
+      - "8084:8084"
+    volumes:
+      - ./inventory_service:/app
+      - maven-cache:/root/.m2
+    working_dir: /app
+    command: ./mvnw spring-boot:run
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SERVER_PORT=8084
+    depends_on:
+      - rabbitmq
+    networks:
+      - irms-network
 
   gateway:
     image: eclipse-temurin:21-jdk-jammy

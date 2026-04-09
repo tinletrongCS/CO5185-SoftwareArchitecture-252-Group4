@@ -1,0 +1,10 @@
+com/irms/inventory_service/dto/InventoryItemResponseDTO.class
+com/irms/inventory_service/service/InventoryServiceImpl.class
+com/irms/inventory_service/dto/InventoryChangedEvent.class
+com/irms/inventory_service/InventoryServiceApplication.class
+com/irms/inventory_service/controller/InventoryController.class
+com/irms/inventory_service/repository/InventoryRepository.class
+com/irms/inventory_service/config/RabbitMQConfig.class
+com/irms/inventory_service/dto/InventoryItemRequestDTO.class
+com/irms/inventory_service/entity/InventoryItem.class
+com/irms/inventory_service/service/InventoryService.class

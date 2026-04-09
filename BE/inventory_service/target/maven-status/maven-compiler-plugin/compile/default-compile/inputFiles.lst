@@ -1,0 +1,10 @@
+/app/src/main/java/com/irms/inventory_service/InventoryServiceApplication.java
+/app/src/main/java/com/irms/inventory_service/config/RabbitMQConfig.java
+/app/src/main/java/com/irms/inventory_service/controller/InventoryController.java
+/app/src/main/java/com/irms/inventory_service/dto/InventoryChangedEvent.java
+/app/src/main/java/com/irms/inventory_service/dto/InventoryItemRequestDTO.java
+/app/src/main/java/com/irms/inventory_service/dto/InventoryItemResponseDTO.java
+/app/src/main/java/com/irms/inventory_service/entity/InventoryItem.java
+/app/src/main/java/com/irms/inventory_service/repository/InventoryRepository.java
+/app/src/main/java/com/irms/inventory_service/service/InventoryService.java
+/app/src/main/java/com/irms/inventory_service/service/InventoryServiceImpl.java
