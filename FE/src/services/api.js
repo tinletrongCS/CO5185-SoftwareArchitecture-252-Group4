@@ -13,3 +13,11 @@ export const authApi = {
   register: (data) => axiosInstance.post('/auth/register', data),
   logout: () => axiosInstance.post('/auth/logout'),
 };
+
+export const userApi = {
+  getAll: () => axiosInstance.get('/auth/users'),
+  getById: (id) => axiosInstance.get(`/auth/users/${id}`),
+  create: (data) => axiosInstance.post('/auth/users', data),
+  update: (id, data) => axiosInstance.put(`/auth/users/${id}`, data),
+  delete: (id) => axiosInstance.delete(`/auth/users/${id}`),
+};

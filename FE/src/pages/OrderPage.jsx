@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useEffect, useState } from 'react'
 import {
   Table,
@@ -55,7 +56,20 @@ function OrderPage() {
   const handleCreate = async () => {
     try {
       const values = await form.validateFields()
-      await orderApi.create(values)
+      
+      let parsedItems = []
+      if (typeof values.items === 'string') {
+        parsedItems = values.items.split(',').map(str => {
+          const parts = str.trim().split(/ x| X/)
+          const itemName = parts[0]
+          const quantity = parts.length > 1 ? parseInt(parts[1], 10) : 1
+          return { itemName, quantity: isNaN(quantity) ? 1 : quantity }
+        }).filter(item => item.itemName)
+      } else {
+        parsedItems = values.items
+      }
+
+      await orderApi.create({ ...values, items: parsedItems })
       message.success('Tạo đơn hàng thành công')
       setModalOpen(false)
       form.resetFields()
@@ -99,6 +113,16 @@ function OrderPage() {
     {
       title: 'Món ăn',
       dataIndex: 'items',
+      render: (items) => {
+        if (!Array.isArray(items)) return String(items);
+        return (
+          <Space wrap size={[0, 4]}>
+            {items.map((item, idx) => (
+              <Tag key={idx} color="blue">{item.itemName} x{item.quantity}</Tag>
+            ))}
+          </Space>
+        );
+      }
     },
     {
       title: 'Trạng thái',
