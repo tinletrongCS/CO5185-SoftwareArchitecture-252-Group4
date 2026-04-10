@@ -5,16 +5,22 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: ordering-service
+          uri: http://ordering-service:8082
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=1
         - id: auth-service
           uri: http://auth-service:8083
           predicates:
             - Path=/auth/**
           filters:
             - StripPrefix=1
-        - id: ordering-service
-          uri: http://ordering-service:8082
+        - id: inventory-service
+          uri:  http://inventory-service:8084
           predicates:
-            - Path=/orders/**
+            - Path=/inventory/**
           filters:
             - PrefixPath=/api
       globalcors:

@@ -1,7 +1,10 @@
 package com.irms.ordering_service.service;
 
 import com.irms.ordering_service.config.RabbitMQConfig;
+import com.irms.ordering_service.dto.OrderItemRequestDTO;
+import com.irms.ordering_service.dto.OrderItemResponseDTO;
 import com.irms.ordering_service.entity.OrderEntity;
+import com.irms.ordering_service.entity.OrderItemEntity;
 import com.irms.ordering_service.repository.OrderRepository;
 import com.irms.ordering_service.dto.OrderRequestDTO;
 import com.irms.ordering_service.dto.OrderResponseDTO;
@@ -17,18 +20,30 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final RabbitTemplate rabbitTemplate;
+
     @Override
     public OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO) {
         OrderEntity order = new OrderEntity();
         order.setTableId(orderRequestDTO.getTableId());
-        order.setItemsList(orderRequestDTO.getItems());
         order.setStatus("PENDING");
+
+        if (orderRequestDTO.getItems() != null) {
+            for (OrderItemRequestDTO itemDto : orderRequestDTO.getItems()) {
+                OrderItemEntity itemEntity = new OrderItemEntity();
+                itemEntity.setItemName(itemDto.getItemName());
+                itemEntity.setQuantity(itemDto.getQuantity());
+                itemEntity.setUnitPrice(itemDto.getUnitPrice());
+                itemEntity.setIsCompleted(false);
+
+                order.addItem(itemEntity);
+            }
+        }
 
         OrderEntity saved = orderRepository.save(order);
         OrderResponseDTO responseDTO = toResponseDTO(saved);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY, responseDTO);
-        System.out.println("Đã gửi thông báo đơn hàng mới lên RabbitMQ: " + responseDTO.getId());
+        System.out.println("Đã gửi thông báo đơn mới lên RabbitMQ: " + responseDTO.getId());
         return responseDTO;
     }
 
@@ -55,10 +70,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderResponseDTO toResponseDTO(OrderEntity entity) {
+        List<OrderItemResponseDTO> itemDTOs = null;
+
+        if (entity.getItems() != null) {
+            itemDTOs = entity.getItems().stream()
+                    .map(item -> new OrderItemResponseDTO(
+                            item.getId(),
+                            item.getItemName(),
+                            item.getQuantity(),
+                            item.getIsCompleted()
+                    ))
+                    .toList();
+        }
+
         return new OrderResponseDTO(
                 entity.getId(),
                 entity.getTableId(),
-                entity.getItemsList(),
+                itemDTOs,
                 entity.getStatus()
         );
     }
