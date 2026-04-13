@@ -22,7 +22,7 @@ spring:
           predicates:
             - Path=/inventory/**
           filters:
-            - PrefixPath=/api
+            - StripPrefix=1
       globalcors:
         corsConfigurations:
           '[/**]':

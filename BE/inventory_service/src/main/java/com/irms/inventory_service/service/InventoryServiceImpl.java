@@ -4,7 +4,7 @@ import com.irms.inventory_service.config.RabbitMQConfig;
 import com.irms.inventory_service.dto.InventoryChangedEvent;
 import com.irms.inventory_service.dto.InventoryItemRequestDTO;
 import com.irms.inventory_service.dto.InventoryItemResponseDTO;
-import com.irms.inventory_service.entity.InventoryItem;
+import com.irms.inventory_service.entity.InventoryItemEntity;
 import com.irms.inventory_service.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -51,7 +51,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public InventoryItemResponseDTO getItemById(Long id) 
     {
-        InventoryItem item = findOrThrow(id);
+        InventoryItemEntity item = findOrThrow(id);
         return toResponseDTO(item);
     }
 
@@ -59,9 +59,9 @@ public class InventoryServiceImpl implements InventoryService {
     public List<InventoryItemResponseDTO> createItems(List<InventoryItemRequestDTO> dtos) 
     {
         return dtos.stream().map(dto -> {
-            InventoryItem item = new InventoryItem();
+            InventoryItemEntity item = new InventoryItemEntity();
             mapDtoToEntity(dto, item);
-            InventoryItem saved = inventoryRepository.save(item);
+            InventoryItemEntity saved = inventoryRepository.save(item);
 
             publishEvent(new InventoryChangedEvent(
                     saved.getId(),
@@ -80,11 +80,11 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public InventoryItemResponseDTO updateItem(Long id, InventoryItemRequestDTO dto) 
     {
-        InventoryItem item = findOrThrow(id);
+        InventoryItemEntity item = findOrThrow(id);
         int oldQuantity = item.getQuantity();
 
         mapDtoToEntity(dto, item);
-        InventoryItem updated = inventoryRepository.save(item);
+        InventoryItemEntity updated = inventoryRepository.save(item);
 
         // Notify nếu số lượng thay đổi
         if (oldQuantity != updated.getQuantity()) {
@@ -104,7 +104,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void deleteItem(Long id) {
-        InventoryItem item = findOrThrow(id);
+        InventoryItemEntity item = findOrThrow(id);
         inventoryRepository.deleteById(id);
 
         publishEvent(new InventoryChangedEvent(
@@ -122,7 +122,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public InventoryItemResponseDTO updateQuantity(Long id, int delta) 
     {
-        InventoryItem item = findOrThrow(id);
+        InventoryItemEntity item = findOrThrow(id);
         int oldQuantity = item.getQuantity();
         int newQuantity = Math.max(0, oldQuantity + delta);
 
@@ -133,7 +133,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setAvailable(false);
         }
 
-        InventoryItem updated = inventoryRepository.save(item);
+        InventoryItemEntity updated = inventoryRepository.save(item);
 
         String changeType = newQuantity <= 0 ? "OUT_OF_STOCK" : "UPDATED";
         publishEvent(new InventoryChangedEvent(
@@ -154,12 +154,12 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
 
-    private InventoryItem findOrThrow(Long id) {
+    private InventoryItemEntity findOrThrow(Long id) {
         return inventoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Inventory item not found: " + id));
     }
 
-    private void mapDtoToEntity(InventoryItemRequestDTO dto, InventoryItem item) 
+    private void mapDtoToEntity(InventoryItemRequestDTO dto, InventoryItemEntity item)
     {
         item.setName(dto.getName());
         item.setCategory(dto.getCategory());
@@ -173,14 +173,14 @@ public class InventoryServiceImpl implements InventoryService {
     private void publishEvent(InventoryChangedEvent event) {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.INVENTORY_ROUTING_KEY,
+                RabbitMQConfig.ROUTING_KEY,
                 event
         );
         System.out.println("[Inventory] Published event: " + event.getChangeType()
                 + " - item #" + event.getItemId() + " (" + event.getItemName() + ")");
     }
 
-    private InventoryItemResponseDTO toResponseDTO(InventoryItem item) 
+    private InventoryItemResponseDTO toResponseDTO(InventoryItemEntity item)
     {
         return new InventoryItemResponseDTO(
             item.getId(),

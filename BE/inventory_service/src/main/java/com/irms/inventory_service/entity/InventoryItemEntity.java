@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class InventoryItem {
+public class InventoryItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

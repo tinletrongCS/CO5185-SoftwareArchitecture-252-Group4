@@ -8,6 +8,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_ERLANG_COOKIE: "irms_secret_cookie_123"
     networks:
       - irms-network
 
@@ -80,6 +81,7 @@ services:
     depends_on:
       - auth-service
       - ordering-service
+      - inventory-service
     networks:
       - irms-network
 

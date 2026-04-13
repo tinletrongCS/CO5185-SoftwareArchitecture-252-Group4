@@ -18,6 +18,9 @@ public class OrderItemEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "inventory_item_id")
+    private Long inventoryItemId;
+
     @Column(name = "item_name", nullable = false)
     private String itemName;
 
