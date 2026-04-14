@@ -19,6 +19,16 @@ export const inventoryApi = {
   updateQuantity: (id, delta) => axiosInstance.patch(`/inventory/items/${id}/quantity?delta=${delta}`),
 };
 
+export const tableApi = {
+  getAll: () => axiosInstance.get('/inventory/tables'),
+  getAvailable: () => axiosInstance.get('/inventory/tables/available'),
+  getById: (id) => axiosInstance.get(`/inventory/tables/${id}`),
+  create: (data) => axiosInstance.post('/inventory/tables', data),
+  update: (id, data) => axiosInstance.put(`/inventory/tables/${id}`, data),
+  delete: (id) => axiosInstance.delete(`/inventory/tables/${id}`),
+  updateStatus: (id, available) => axiosInstance.put(`/inventory/tables/${id}/status?available=${available}`),
+};
+
 export const authApi = {
   login: (credentials) => axiosInstance.post('/auth/login', credentials),
   register: (data) => axiosInstance.post('/auth/register', data),
