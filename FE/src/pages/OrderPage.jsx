@@ -130,6 +130,7 @@ function OrderPage() {
       const parsedItems = Object.keys(cart).map((itemName) => {
         const menuItem = menu.find(item => item.name === itemName);
         return {
+          inventoryItemId: menuItem ? menuItem.id : null,
           itemName: itemName,
           quantity: cart[itemName],
           unitPrice: menuItem ? menuItem.price : 0
