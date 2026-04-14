@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderItemResponseDTO {
     private Long id;
+    private Long inventoryItemId;
     private String itemName;
     private Integer quantity;
+    private Float unitPrice;
     private Boolean isCompleted;
 }

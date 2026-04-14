@@ -1,13 +1,10 @@
 package com.irms.ordering_service.service;
 
 import com.irms.ordering_service.config.RabbitMQConfig;
-import com.irms.ordering_service.dto.OrderItemRequestDTO;
-import com.irms.ordering_service.dto.OrderItemResponseDTO;
+import com.irms.ordering_service.dto.*;
 import com.irms.ordering_service.entity.OrderEntity;
 import com.irms.ordering_service.entity.OrderItemEntity;
 import com.irms.ordering_service.repository.OrderRepository;
-import com.irms.ordering_service.dto.OrderRequestDTO;
-import com.irms.ordering_service.dto.OrderResponseDTO;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +20,24 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO) {
+        OrderEntity order = getOrder(orderRequestDTO);
+
+        OrderEntity saved = orderRepository.save(order);
+
+        // map từng cái item trong list các OrderItemEntity
+        List<OrderPlacedEventDTO.OrderItemEvent> evenItems = saved.getItems().stream()
+                        .map(item -> new OrderPlacedEventDTO.OrderItemEvent(item.getInventoryItemId(), item.getItemName(), item.getQuantity()))
+                        .toList();
+
+        OrderPlacedEventDTO event = new OrderPlacedEventDTO(saved.getId(), evenItems);
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
+        System.out.println("Event published to RabbitMQ for inventory update: " + saved.getId());
+
+        return toResponseDTO(order);
+    }
+
+    private static OrderEntity getOrder(OrderRequestDTO orderRequestDTO) {
         OrderEntity order = new OrderEntity();
         order.setTableId(orderRequestDTO.getTableId());
         order.setStatus("PENDING");
@@ -30,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
         if (orderRequestDTO.getItems() != null) {
             for (OrderItemRequestDTO itemDto : orderRequestDTO.getItems()) {
                 OrderItemEntity itemEntity = new OrderItemEntity();
+                itemEntity.setInventoryItemId(itemDto.getInventoryItemId());
                 itemEntity.setItemName(itemDto.getItemName());
                 itemEntity.setQuantity(itemDto.getQuantity());
                 itemEntity.setUnitPrice(itemDto.getUnitPrice());
@@ -38,13 +54,7 @@ public class OrderServiceImpl implements OrderService {
                 order.addItem(itemEntity);
             }
         }
-
-        OrderEntity saved = orderRepository.save(order);
-        OrderResponseDTO responseDTO = toResponseDTO(saved);
-
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY, responseDTO);
-        System.out.println("Đã gửi thông báo đơn mới lên RabbitMQ: " + responseDTO.getId());
-        return responseDTO;
+        return order;
     }
 
     @Override
@@ -53,6 +63,13 @@ public class OrderServiceImpl implements OrderService {
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    @Override
+    public OrderResponseDTO getOrderById(Long id) {
+        OrderEntity order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + id));
+        return toResponseDTO(order);
     }
 
     @Override
@@ -76,8 +93,10 @@ public class OrderServiceImpl implements OrderService {
             itemDTOs = entity.getItems().stream()
                     .map(item -> new OrderItemResponseDTO(
                             item.getId(),
+                            item.getInventoryItemId(),
                             item.getItemName(),
                             item.getQuantity(),
+                            item.getUnitPrice(),
                             item.getIsCompleted()
                     ))
                     .toList();

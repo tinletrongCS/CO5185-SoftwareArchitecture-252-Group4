@@ -1,7 +1,10 @@
 package com.irms.inventory_service.config;
 
-import org.springframework.amqp.core.*;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,33 +12,27 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    // Dùng chung exchange với ordering_service
+    public static final String QUEUE_NAME = "inventory_deduct_queue";
     public static final String EXCHANGE_NAME = "restaurant_exchange";
-
-    // Routing key riêng cho inventory
-    public static final String INVENTORY_ROUTING_KEY = "inventory.changed";
-    public static final String INVENTORY_QUEUE = "inventory.changed.queue";
+    public static final String ROUTING_KEY = "order.created";
 
     @Bean
-    public TopicExchange exchange() {
+    public Queue inventoryQueue() {
+        return new Queue(QUEUE_NAME, true); // true = giữ queue lại dù server có sập
+    }
+
+    @Bean
+    public TopicExchange orderExchange() {
         return new TopicExchange(EXCHANGE_NAME);
     }
 
     @Bean
-    public Queue inventoryChangedQueue() {
-        return new Queue(INVENTORY_QUEUE, true);
+    public Binding binding(Queue inventoryQueue, TopicExchange orderExchange) {
+        return BindingBuilder.bind(inventoryQueue).to(orderExchange).with(ROUTING_KEY);
     }
 
     @Bean
-    public Binding inventoryChangedBinding(Queue inventoryChangedQueue, TopicExchange exchange) {
-        return BindingBuilder
-                .bind(inventoryChangedQueue)
-                .to(exchange)
-                .with(INVENTORY_ROUTING_KEY);
-    }
-
-    @Bean
-    public MessageConverter converter() {
-        return new Jackson2JsonMessageConverter();
+    public MessageConverter jsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
     }
 }
