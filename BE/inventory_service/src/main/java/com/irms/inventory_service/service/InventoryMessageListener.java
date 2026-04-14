@@ -23,6 +23,10 @@ public class InventoryMessageListener {
         System.out.println("Kho nhận được yêu cầu trừ món từ đơn hàng: " + event.getOrderId());
 
         for (OrderPlacedEventDTO.OrderItemEvent item : event.getItems()) {
+            if (item.getItemId() == null) {
+                System.err.println("CẢNH BÁO: Bỏ qua item không có ID (có thể do lỗi dữ liệu cũ): " + item.getItemName());
+                continue;
+            }
             Optional<InventoryItemEntity> inventoryItemOpt = inventoryRepository.findById(item.getItemId());
 
             if (inventoryItemOpt.isPresent()) {
