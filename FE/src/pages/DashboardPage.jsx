@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Layout, Menu, Typography, Button } from 'antd';
+import { Layout, Menu, Typography, Button, Divider } from 'antd';
 import {
   UserOutlined,
   DashboardOutlined,
   LogoutOutlined,
-  ShoppingCartOutlined
+  ShoppingCartOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import UserTable from '../components/UserTable';
 import OrderPage from './OrderPage';
+import InventoryPage from './InventoryPage';
+import MenuView from '../components/MenuView';
 import './DashboardPage.css';
 
 const { Header, Content, Sider } = Layout;
@@ -31,11 +34,18 @@ const DashboardPage = () => {
       icon: <UserOutlined />,
       label: 'Quản Lý Người Dùng',
     }] : []),
-    {
+    // Only show 'Đơn Hàng' if user has 'admin' permission
+    ...(user?.permission === 'admin' ? [{
       key: '3',
       icon: <ShoppingCartOutlined />,
       label: 'Đơn Hàng',
-    }
+    }] : []),
+    // Only show 'Kho hàng' if user has 'admin' permission
+    ...(user?.permission === 'admin' ? [{
+      key: '4',
+      icon: <InboxOutlined />,
+      label: 'Kho Hàng',
+    }] : []),
   ];
 
   const renderContent = () => {
@@ -43,20 +53,22 @@ const DashboardPage = () => {
       case '1':
         return (
           <div>
-            <Title level={3}>Xin chào, {user?.userName}!</Title>
-            <Text type="secondary">Vai trò: {user?.permission}</Text>
-            <div style={{ marginTop: '20px' }}>
-              <p>Đây là trang tổng quan chính của hệ thống.</p>
-              {user?.permission !== 'admin' && (
-                <p>Bạn có quyền người dùng tiêu chuẩn. Bạn không thể xem phần Quản Lý Người Dùng.</p>
-              )}
+            <div style={{ marginBottom: 24 }}>
+              <Title level={3}>Xin chào, {user?.userName}!</Title>
+              <Text type="secondary">Vai trò: {user?.permission}</Text>
             </div>
+            
+            {/* Show Menu for everyone in Overview, but it's the ONLY thing for regular users */}
+            <Divider />
+            <MenuView />
           </div>
         );
       case '2':
         return <UserTable />;
       case '3':
         return <OrderPage />;
+      case '4':
+        return <InventoryPage />;
       default:
         return <div>Vui lòng chọn một mục</div>;
     }
