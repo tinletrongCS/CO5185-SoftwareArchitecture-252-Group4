@@ -1,12 +1,12 @@
-/app/src/main/java/com/irms/inventory_service/InventoryServiceApplication.java
-/app/src/main/java/com/irms/inventory_service/config/RabbitMQConfig.java
-/app/src/main/java/com/irms/inventory_service/controller/InventoryController.java
-/app/src/main/java/com/irms/inventory_service/dto/InventoryChangedEvent.java
-/app/src/main/java/com/irms/inventory_service/dto/InventoryItemRequestDTO.java
-/app/src/main/java/com/irms/inventory_service/dto/InventoryItemResponseDTO.java
-/app/src/main/java/com/irms/inventory_service/dto/OrderPlacedEventDTO.java
-/app/src/main/java/com/irms/inventory_service/entity/InventoryItemEntity.java
-/app/src/main/java/com/irms/inventory_service/repository/InventoryRepository.java
-/app/src/main/java/com/irms/inventory_service/service/InventoryMessageListener.java
-/app/src/main/java/com/irms/inventory_service/service/InventoryService.java
-/app/src/main/java/com/irms/inventory_service/service/InventoryServiceImpl.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\config\RabbitMQConfig.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\controller\InventoryController.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\dto\InventoryChangedEvent.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\dto\InventoryItemRequestDTO.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\dto\InventoryItemResponseDTO.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\dto\OrderPlacedEventDTO.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\entity\InventoryItemEntity.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\InventoryServiceApplication.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\repository\InventoryRepository.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\service\InventoryMessageListener.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\service\InventoryService.java
+C:\Users\lttin\Desktop\restaurant - new\BE\inventory_service\src\main\java\com\irms\inventory_service\service\InventoryServiceImpl.java

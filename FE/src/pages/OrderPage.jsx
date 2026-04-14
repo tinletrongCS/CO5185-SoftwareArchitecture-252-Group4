@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { useEffect, useState } from 'react'
 import {
-  Table,
   Button,
   Modal,
   Form,
@@ -16,25 +15,32 @@ import {
   List,
   Divider,
   Radio,
-  Spin
+  Spin,
+  Row,
+  Col,
+  Empty,
+  Badge
 } from 'antd'
 import {
   PlusOutlined,
   ReloadOutlined,
   DeleteOutlined,
   MinusOutlined,
-  EyeOutlined, // <-- IMPORT THÊM ICON CON MẮT
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  TableOutlined
 } from '@ant-design/icons'
 import { orderApi, inventoryApi } from '../services/api'
 
 const { Title, Text } = Typography
 
-const STATUS_COLORS = {
-  PENDING: 'orange',
-  PREPARING: 'blue',
-  READY: 'default',
-  COMPLETED: 'green',
-  CANCELLED: 'red',
+const STATUS_CONFIG = {
+  PENDING: { color: 'orange', label: 'Đang chờ', icon: <Spin size="small" style={{ marginRight: 8 }} /> },
+  COMPLETED: { color: 'green', label: 'Hoàn tất', icon: <CheckCircleOutlined style={{ marginRight: 8 }} /> },
+  CANCELLED: { color: 'red', label: 'Đã hủy', icon: <CloseCircleOutlined style={{ marginRight: 8 }} /> },
 }
 
 function OrderPage() {
@@ -111,7 +117,6 @@ function OrderPage() {
     })
   }
 
-  // --- HÀM TÍNH TỔNG TIỀN (TẠM TÍNH) ---
   const calculateTotal = () => {
     let total = 0;
     Object.keys(cart).forEach(itemName => {
@@ -177,13 +182,13 @@ function OrderPage() {
     }
   }
 
-  const handleViewDetails = async (record) => {
-    setSelectedOrder(record);
+  const handleViewDetails = async (order) => {
+    setSelectedOrder(order);
     setDetailsModalOpen(true);
     setDetailsLoading(true);
     try {
-      const res = await orderApi.getById(record.id);
-      setOrderDetails(res.data); // Lưu dữ liệu API trả về vào State
+      const res = await orderApi.getById(order.id);
+      setOrderDetails(res.data);
     } catch (err) {
       message.error('Không thể tải chi tiết đơn hàng');
     } finally {
@@ -198,135 +203,130 @@ function OrderPage() {
     }, 0);
   }
 
-  const detailColumns = [
-    { title: 'Tên món', dataIndex: 'itemName', key: 'itemName' },
-    { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity', align: 'center' },
-    {
-      title: 'Đơn giá',
-      dataIndex: 'unitPrice',
-      key: 'unitPrice',
-      align: 'right',
-      render: (price) => `${(price || 0).toLocaleString('vi-VN')} đ`
-    },
-    {
-      title: 'Thành tiền',
-      key: 'total',
-      align: 'right',
-      render: (_, record) => {
-        const subtotal = (record.quantity || 0) * (record.unitPrice || 0);
-        return <Text strong>{subtotal.toLocaleString('vi-VN')} đ</Text>;
-      }
-    }
-  ]
-
-  const columns = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: 'Bàn', dataIndex: 'tableId', width: 80 },
-    {
-      title: 'Món ăn',
-      dataIndex: 'items',
-      render: (items) => {
-        if (!Array.isArray(items)) return String(items)
-        return (
-          <Space wrap size={[0, 4]}>
-            {items.map((item, idx) => (
-              <Tag key={idx} color="blue">
-                {item.itemName} x {item.quantity}
-              </Tag>
-            ))}
-          </Space>
-        )
-      },
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      width: 140,
-      render: (status) => (
-        <Tag color={STATUS_COLORS[status] || 'default'}>{status}</Tag>
-      ),
-    },
-    {
-      title: 'Thao tác',
-      width: 320,
-      render: (_, record) => (
-        <Space size="small">
-          {/* NÚT XEM CHI TIẾT */}
-          <Button
-            size="small"
-            type="dashed"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetails(record)}
-          >
-            Chi tiết
-          </Button>
-
-          <Select
-            size="small"
-            value={record.status}
-            style={{ width: 120 }}
-            onChange={(val) => handleUpdateStatus(record.id, val)}
-            options={[
-              { value: 'PENDING', label: 'PENDING' },
-              { value: 'PREPARING', label: 'PREPARING' },
-              { value: 'READY', label: 'READY' },
-              { value: 'COMPLETED', label: 'COMPLETED' },
-              { value: 'CANCELLED', label: 'CANCELLED' },
-            ]}
-          />
-          <Popconfirm
-            title="Xóa đơn hàng?"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button size="small" danger icon={<DeleteOutlined />}>
-              Xóa
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ]
-
   const filteredMenu = selectedCategory === 'all'
     ? menu
     : menu.filter(item => item.category === selectedCategory);
 
-  return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-          <Title level={3} style={{ margin: 0 }}>Quản lý Đơn hàng</Title>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={fetchOrders} loading={loading}>
-              Làm mới
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-              Tạo đơn
-            </Button>
+  // --- RENDER ORDER CARD (KANBAN ITEM) ---
+  const renderOrderCard = (order) => {
+    const totalItems = (order.items || []).reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = (order.items || []).reduce((sum, item) => sum + (item.quantity * (item.unitPrice || 0)), 0);
+
+    return (
+      <Card
+        key={order.id}
+        size="small"
+        style={{ marginBottom: 12, borderRadius: 2, borderLeft: `4px solid ${STATUS_CONFIG[order.status]?.color || '#d9d9d9'}` }}
+        bodyStyle={{ padding: 12 }}
+        hoverable
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text strong style={{ fontSize: 16 }}><TableOutlined /> {order.tableId}</Text>
+          <Text type="secondary" small>#{order.id}</Text>
+        </div>
+        
+        <div style={{ marginBottom: 12 }}>
+          <Space wrap size={[0, 4]}>
+            {(order.items || []).map((item, idx) => (
+              <Tag key={idx} style={{ fontSize: 11, borderRadius: 2 }}>
+                {item.itemName} x{item.quantity}
+              </Tag>
+            ))}
           </Space>
         </div>
 
-        <Table
-          rowKey="id"
-          columns={columns}
-          dataSource={orders}
-          loading={loading}
-          pagination={{ pageSize: 10 }}
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text strong type="danger">{totalPrice.toLocaleString('vi-VN')} đ</Text>
+          <Space>
+            <Button 
+                size="small" 
+                type="text" 
+                icon={<EyeOutlined />} 
+                onClick={() => handleViewDetails(order)}
+            />
+            {order.status === 'PENDING' && (
+              <>
+                <Popconfirm title="Xác nhận hoàn tất?" onConfirm={() => handleUpdateStatus(order.id, 'COMPLETED')}>
+                  <Button size="small" type="primary" icon={<CheckOutlined />} style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }} />
+                </Popconfirm>
+                <Popconfirm title="Xác nhận hủy đơn?" onConfirm={() => handleUpdateStatus(order.id, 'CANCELLED')}>
+                  <Button size="small" danger icon={<CloseOutlined />} />
+                </Popconfirm>
+              </>
+            )}
+            {order.status !== 'PENDING' && (
+               <Popconfirm title="Xóa đơn hàng?" onConfirm={() => handleDelete(order.id)}>
+                 <Button size="small" type="text" danger icon={<DeleteOutlined />} />
+               </Popconfirm>
+            )}
+          </Space>
+        </div>
       </Card>
+    )
+  }
 
-      {/* --- MODAL XEM CHI TIẾT ĐƠN HÀNG --- */}
+  // --- RENDER KANBAN COLUMN ---
+  const renderColumn = (statusKey, title) => {
+    const columnOrders = orders.filter(o => o.status === statusKey);
+    const config = STATUS_CONFIG[statusKey];
+
+    return (
+      <Col xs={24} md={8}>
+        <div style={{ background: '#f5f5f5', borderRadius: 2, padding: 12, minHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '0 4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {config.icon}
+              <Title level={5} style={{ margin: 0 }}>{title}</Title>
+            </div>
+            <Badge count={columnOrders.length} color={config.color} />
+          </div>
+          
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {columnOrders.length === 0 ? (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Trống" />
+            ) : (
+              columnOrders.map(order => renderOrderCard(order))
+            )}
+          </div>
+        </div>
+      </Col>
+    )
+  }
+
+  return (
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Title level={3} style={{ margin: 0 }}>Danh sách đơn hàng</Title>
+        <Space>
+          <Button icon={<ReloadOutlined />} onClick={fetchOrders} loading={loading}>
+            Làm mới
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+            Tạo đơn
+          </Button>
+        </Space>
+      </div>
+
+      <Spin spinning={loading}>
+        <Row gutter={16}>
+          {renderColumn('PENDING', 'ĐANG CHỜ')}
+          {renderColumn('COMPLETED', 'HOÀN TẤT')}
+          {renderColumn('CANCELLED', 'ĐÃ HỦY')}
+        </Row>
+      </Spin>
+
+      {/* --- MODAL XEM CHI TIẾT --- */}
       <Modal
         title={
           <Space>
             <span>Chi tiết đơn hàng #{selectedOrder?.id}</span>
-            {selectedOrder && <Tag color={STATUS_COLORS[selectedOrder.status]}>{selectedOrder.status}</Tag>}
+            {selectedOrder && <Tag color={STATUS_CONFIG[selectedOrder.status]?.color}>{selectedOrder.status}</Tag>}
           </Space>
         }
         open={detailsModalOpen}
         onCancel={() => {
           setDetailsModalOpen(false);
-          setOrderDetails(null); // Reset data khi đóng Modal
+          setOrderDetails(null);
         }}
         footer={[
           <Button key="close" type="primary" onClick={() => {
@@ -341,35 +341,34 @@ function OrderPage() {
         {selectedOrder && (
           <div style={{ padding: '10px 0' }}>
             <p><strong>Bàn phục vụ:</strong> <Tag color="geekblue" style={{ fontSize: 14 }}>{selectedOrder.tableId}</Tag></p>
-
             <Divider orientation="left">Danh sách món ăn</Divider>
-
             <Spin spinning={detailsLoading}>
-              {/* Bảng liệt kê chi tiết từng món */}
-              <Table
-                dataSource={orderDetails?.items || []}
-                columns={detailColumns}
-                rowKey="itemName"
-                pagination={false}
+              <List
                 size="small"
                 bordered
+                dataSource={orderDetails?.items || []}
+                renderItem={item => (
+                  <List.Item>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <Text>{item.itemName} <Text type="secondary">x{item.quantity}</Text></Text>
+                      <Text strong>{(item.quantity * (item.unitPrice || 0)).toLocaleString('vi-VN')} đ</Text>
+                    </div>
+                  </List.Item>
+                )}
               />
             </Spin>
-
             <Divider dashed />
-
-            {/* Hiển thị Giá Chốt */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fffbe6', padding: '12px 16px', borderRadius: 8, border: '1px solid #ffe58f' }}>
-              <Title level={4} style={{ margin: 0 }}>Tổng giá chốt:</Title>
+              <Title level={4} style={{ margin: 0 }}>Tổng cộng:</Title>
               <Title level={3} type="danger" style={{ margin: 0 }}>
                 {calculateFinalPrice().toLocaleString('vi-VN')} đ
               </Title>
             </div>
-
           </div>
         )}
       </Modal>
 
+      {/* --- MODAL TẠO ĐƠN --- */}
       <Modal
         title="Tạo đơn hàng mới"
         open={modalOpen}
@@ -391,9 +390,7 @@ function OrderPage() {
             <Input placeholder="VD: Bàn 01" />
           </Form.Item>
         </Form>
-
         <Divider orientation="left">Chọn món</Divider>
-
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
           <Radio.Group
             value={selectedCategory}
@@ -407,7 +404,6 @@ function OrderPage() {
             <Radio.Button value="trang_mieng">Tráng miệng</Radio.Button>
           </Radio.Group>
         </div>
-
         <div style={{ height: 320, overflowY: 'auto', border: '1px solid #f0f0f0', borderRadius: 8, padding: 8 }}>
           <List
             itemLayout="horizontal"
@@ -415,12 +411,14 @@ function OrderPage() {
             loading={menuLoading}
             renderItem={(item) => {
               const qty = cart[item.name] || 0;
+              const isOutOfStock = (item.quantity || 0) <= qty;
               return (
                 <List.Item
                   style={{
                     border: qty > 0 ? '1px solid #1890ff' : '1px solid transparent',
-                    borderRadius: 8,
+                    borderRadius: 2,
                     backgroundColor: qty > 0 ? '#e6f7ff' : 'transparent',
+                    opacity: (item.quantity <= 0 && qty === 0) ? 0.6 : 1,
                     transition: 'all 0.2s ease'
                   }}
                   actions={[
@@ -438,6 +436,7 @@ function OrderPage() {
                         type="primary"
                         shape="circle"
                         icon={<PlusOutlined />}
+                        disabled={isOutOfStock}
                         onClick={() => handleAddToCart(item.name)}
                       />
                     </Space>
@@ -446,18 +445,34 @@ function OrderPage() {
                   <List.Item.Meta
                     title={
                       <div style={{ display: 'flex', justifyContent: 'space-between', paddingRight: 20 }}>
-                        <span>{item.name}</span>
+                        <Space>
+                          <span>{item.name}</span>
+                          {item.quantity <= 5 && item.quantity > 0 && <Tag color="warning">Sắp hết</Tag>}
+                          {item.quantity <= 0 && <Tag color="error">Hết hàng</Tag>}
+                        </Space>
                         <Text type="success" strong>{item.price.toLocaleString('vi-VN')} đ</Text>
                       </div>
                     }
-                    description={item.description}
+                    description={
+                      <div style={{ marginTop: 4 }}>
+                        <div style={{ color: 'rgba(0, 0, 0, 0.45)', marginBottom: 4 }}>{item.description}</div>
+                        <Space>
+                          <Text type="secondary" size="small">Kho:</Text>
+                          <Tag 
+                            color={((item.quantity || 0) - qty) <= 5 ? 'volcano' : 'green'} 
+                            style={{ borderRadius: 2 }}
+                          >
+                            Còn {(item.quantity || 0) - qty} món
+                          </Tag>
+                        </Space>
+                      </div>
+                    }
                   />
                 </List.Item>
               )
             }}
           />
         </div>
-
         <Divider orientation="left">Các món bạn đã chọn</Divider>
         <Card size="small" style={{ backgroundColor: '#fafafa' }}>
           {Object.keys(cart).length === 0 ? (
@@ -471,7 +486,6 @@ function OrderPage() {
                   </Tag>
                 ))}
               </Space>
-
               <Divider style={{ margin: '8px 0' }} dashed />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text strong>Tạm tính:</Text>
