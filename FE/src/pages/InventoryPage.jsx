@@ -238,7 +238,7 @@ function InventoryPage() {
       align: 'right',
       sorter: (a, b) => (a.price || 0) - (b.price || 0),
       render: (price) => (
-        <Text strong style={{ color: '#52c41a' }}>
+        <Text style={{ color: '#000000ff' }}>
           {(price || 0).toLocaleString('vi-VN')} đ
         </Text>
       ),
@@ -250,7 +250,7 @@ function InventoryPage() {
       align: 'center',
       sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
       render: (qty) => {
-        let color = '#52c41a'
+        let color = '#4c8131ff'
         if (qty <= 0) color = '#ff4d4f'
         else if (qty <= 10) color = '#faad14'
         return (

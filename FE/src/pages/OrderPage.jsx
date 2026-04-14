@@ -96,6 +96,9 @@ function OrderPage() {
   const [orderDetails, setOrderDetails] = useState(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
 
+  const [currentStep, setCurrentStep] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+
   const fetchOrders = async () => {
     setLoading(true)
     try {
@@ -183,11 +186,14 @@ function OrderPage() {
   }
 
   const handleCreate = async () => {
+    if (submitting) return;
+    setSubmitting(true)
     try {
       await form.validateFields()
 
       if (!selectedTableId) {
         message.warning('Vui lòng chọn bàn!')
+        setSubmitting(false)
         return
       }
 
@@ -203,6 +209,7 @@ function OrderPage() {
 
       if (parsedItems.length === 0) {
         message.warning('Vui lòng chọn ít nhất 1 món ăn!')
+        setSubmitting(false)
         return
       }
 
@@ -223,7 +230,10 @@ function OrderPage() {
       fetchOrders()
       fetchAllTables()
     } catch (err) {
+      console.error(err)
       message.error('Tạo đơn hàng thất bại')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -318,7 +328,7 @@ function OrderPage() {
     const isAvailable = table.available
     const bgColor = isSelected ? '#1890ff'
       : isAvailable ? (ZONE_COLORS[table.zone] || '#1890ff')
-      : '#d9d9d9'
+        : '#d9d9d9'
 
     return (
       <Tooltip
@@ -370,51 +380,53 @@ function OrderPage() {
     if (allTables.length === 0) return null
 
     return (
-      <Card
-        size="small"
-        style={{ marginBottom: 24 }}
-        title={
-          <Space>
-            <EnvironmentOutlined />
-            <span>Sơ đồ nhà hàng</span>
-            <Tag color="green">{allTables.filter(t => t.available).length} trống</Tag>
-            <Tag color="red">{allTables.filter(t => !t.available).length} đang dùng</Tag>
-          </Space>
-        }
-        extra={
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <EnvironmentOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
+            <Title level={4} style={{ margin: 0, marginRight: 16 }}>Sơ đồ nhà hàng</Title>
+            <Space>
+              <Tag color="green" style={{ borderRadius: 2 }}>{allTables.filter(t => t.available).length} trống</Tag>
+              <Tag color="red" style={{ borderRadius: 2 }}>{allTables.filter(t => !t.available).length} đang dùng</Tag>
+            </Space>
+          </div>
           <Button size="small" icon={<ReloadOutlined />} onClick={fetchAllTables}>Cập nhật</Button>
-        }
-      >
-        <Row gutter={[16, 16]}>
-          {Object.entries(tablesByZone).map(([zone, tables]) => (
-            <Col key={zone} xs={24} sm={12} md={6}>
-              <div style={{
-                border: `1px solid ${ZONE_COLORS[zone] || '#d9d9d9'}`,
-                borderRadius: 2,
-                padding: 8,
-                minHeight: 120,
-              }}>
+        </div>
+        <Card
+          size="small"
+          style={{ borderRadius: 2 }}
+        >
+          <Row gutter={[16, 16]}>
+            {Object.entries(tablesByZone).map(([zone, zoneTables]) => (
+              <Col key={zone} xs={24} sm={12} md={6}>
                 <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: 8,
-                  padding: '4px 8px',
-                  background: `${ZONE_COLORS[zone]}10`,
+                  border: `1px solid ${ZONE_COLORS[zone] || '#d9d9d9'}`,
                   borderRadius: 2,
+                  padding: 8,
+                  minHeight: 120,
                 }}>
-                  <EnvironmentOutlined style={{ color: ZONE_COLORS[zone], marginRight: 6 }} />
-                  <Text strong style={{ color: ZONE_COLORS[zone], fontSize: 13 }}>
-                    {ZONE_LABELS[zone] || zone}
-                  </Text>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                    padding: '4px 8px',
+                    background: `${ZONE_COLORS[zone]}10`,
+                    borderRadius: 2,
+                  }}>
+                    <EnvironmentOutlined style={{ color: ZONE_COLORS[zone], marginRight: 6 }} />
+                    <Text strong style={{ color: ZONE_COLORS[zone], fontSize: 13 }}>
+                      {ZONE_LABELS[zone] || zone}
+                    </Text>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                    {zoneTables.map(table => renderTableCell(table, false, false))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                  {tables.map(table => renderTableCell(table, false, false))}
-                </div>
-              </div>
-            </Col>
-          ))}
-        </Row>
-      </Card>
+              </Col>
+            ))}
+          </Row>
+        </Card>
+      </div>
     )
   }
 
@@ -434,7 +446,7 @@ function OrderPage() {
           <Text strong style={{ fontSize: 16 }}><TableOutlined /> {order.tableId}</Text>
           <Text type="secondary">#{order.id}</Text>
         </div>
-        
+
         <div style={{ marginBottom: 12 }}>
           <Space wrap size={[0, 4]}>
             {(order.items || []).map((item, idx) => (
@@ -448,11 +460,11 @@ function OrderPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text strong type="danger">{totalPrice.toLocaleString('vi-VN')} đ</Text>
           <Space>
-            <Button 
-                size="small" 
-                type="text" 
-                icon={<EyeOutlined />} 
-                onClick={() => handleViewDetails(order)}
+            <Button
+              size="small"
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewDetails(order)}
             />
             {order.status === 'PENDING' && (
               <>
@@ -465,9 +477,9 @@ function OrderPage() {
               </>
             )}
             {order.status !== 'PENDING' && (
-               <Popconfirm title="Xóa đơn hàng?" onConfirm={() => handleDelete(order.id)}>
-                 <Button size="small" type="text" danger icon={<DeleteOutlined />} />
-               </Popconfirm>
+              <Popconfirm title="Xóa đơn hàng?" onConfirm={() => handleDelete(order.id)}>
+                <Button size="small" type="text" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
             )}
           </Space>
         </div>
@@ -490,7 +502,7 @@ function OrderPage() {
             </div>
             <Badge count={columnOrders.length} color={config.color} />
           </div>
-          
+
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {columnOrders.length === 0 ? (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Trống" />
@@ -517,7 +529,7 @@ function OrderPage() {
 
     return (
       <div style={{ border: '1px solid #f0f0f0', borderRadius: 2, padding: 12, background: '#fafafa' }}>
-        {Object.entries(grouped).map(([zone, tables]) => (
+        {Object.entries(grouped).map(([zone, zoneTables]) => (
           <div key={zone} style={{ marginBottom: 12 }}>
             <div style={{
               display: 'flex',
@@ -533,7 +545,7 @@ function OrderPage() {
               </Text>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-              {tables.map(table => renderTableCell(table, true, selectedTableId === table.id))}
+              {zoneTables.map(table => renderTableCell(table, true, selectedTableId === table.id))}
             </div>
           </div>
         ))}
@@ -543,8 +555,7 @@ function OrderPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Danh sách đơn hàng</Title>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={() => { fetchOrders(); fetchAllTables(); }} loading={loading}>
             Làm mới
@@ -559,6 +570,10 @@ function OrderPage() {
       {renderFloorPlan()}
 
       {/* --- KANBAN BOARD --- */}
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
+        <TableOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
+        <Title level={4} style={{ margin: 0 }}>Quản lý đơn hàng</Title>
+      </div>
       <Spin spinning={loading}>
         <Row gutter={16}>
           {renderColumn('PENDING', 'ĐANG CHỜ')}
@@ -602,7 +617,7 @@ function OrderPage() {
                 renderItem={item => (
                   <List.Item>
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <Text>{item.itemName} <Text type="secondary">x{item.quantity}</Text></Text>
+                      <Text>{item.itemName} <Text type="secondary">x {item.quantity}</Text></Text>
                       <Text strong>{(item.quantity * (item.unitPrice || 0)).toLocaleString('vi-VN')} đ</Text>
                     </div>
                   </List.Item>
@@ -651,25 +666,32 @@ function OrderPage() {
             </Button>
           ),
           currentStep < 2 ? (
-            <Button 
-                key="next" 
-                type="primary" 
-                onClick={() => {
-                  if (currentStep === 0 && !selectedTableId) {
-                    message.warning('Vui lòng chọn bàn!')
-                    return
-                  }
-                  if (currentStep === 1 && Object.keys(cart).length === 0) {
-                    message.warning('Vui lòng chọn ít nhất 1 món!')
-                    return
-                  }
-                  setCurrentStep(currentStep + 1)
-                }}
+            <Button
+              key="next"
+              type="primary"
+              onClick={() => {
+                if (currentStep === 0 && !selectedTableId) {
+                  message.warning('Vui lòng chọn bàn!')
+                  return
+                }
+                if (currentStep === 1 && Object.keys(cart).length === 0) {
+                  message.warning('Vui lòng chọn ít nhất 1 món!')
+                  return
+                }
+                setCurrentStep(currentStep + 1)
+              }}
             >
               Tiếp tục
             </Button>
           ) : (
-            <Button key="submit" type="primary" onClick={handleCreate} style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}>
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleCreate}
+              loading={submitting}
+              disabled={submitting}
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            >
               Xác nhận & Đặt món
             </Button>
           ),
@@ -827,12 +849,29 @@ function OrderPage() {
                 />
               </div>
 
-              {Object.keys(cart).length > 0 && (
-                <div style={{ marginTop: 16, padding: '12px 16px', background: '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 2 }}>
-                  <Text strong>Đã chọn <Text type="primary">{Object.values(cart).reduce((a, b) => a + b, 0)} món</Text></Text>
-                  <Text strong type="danger" style={{ fontSize: 16 }}>{calculateTotal().toLocaleString('vi-VN')} đ</Text>
-                </div>
-              )}
+              <Divider orientation="left">Các món bạn đã chọn</Divider>
+              <Card size="small" style={{ backgroundColor: '#fafafa' }}>
+                {Object.keys(cart).length === 0 ? (
+                  <Text type="secondary">Chưa có món nào được chọn...</Text>
+                ) : (
+                  <>
+                    <Space wrap style={{ marginBottom: 16 }}>
+                      {Object.keys(cart).map((itemName) => (
+                        <Tag key={itemName} color="cyan" style={{ padding: '4px 8px', fontSize: 14 }}>
+                          {itemName} <Text strong type="danger">x {cart[itemName]}</Text>
+                        </Tag>
+                      ))}
+                    </Space>
+                    <Divider style={{ margin: '8px 0' }} dashed />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text strong>Tạm tính:</Text>
+                      <Title level={4} type="danger" style={{ margin: 0 }}>
+                        {calculateTotal().toLocaleString('vi-VN')} đ
+                      </Title>
+                    </div>
+                  </>
+                )}
+              </Card>
             </div>
           )}
 
@@ -882,7 +921,7 @@ function OrderPage() {
                         return (
                           <List.Item style={{ padding: '8px 0' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                              <Text>{itemName} <Text type="secondary">x{cart[itemName]}</Text></Text>
+                              <Text>{itemName} <Text type="secondary">x {cart[itemName]}</Text></Text>
                               <Text strong>{(cart[itemName] * (item?.price || 0)).toLocaleString('vi-VN')} đ</Text>
                             </div>
                           </List.Item>
@@ -908,3 +947,7 @@ function OrderPage() {
 }
 
 export default OrderPage
+
+
+
+
