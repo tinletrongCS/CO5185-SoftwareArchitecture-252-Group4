@@ -5,9 +5,15 @@ import com.irms.auth_service.dto.LoginResponse;
 import com.irms.auth_service.dto.UserDTO;
 import com.irms.auth_service.entity.UserEntity;
 import com.irms.auth_service.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -18,20 +24,34 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Value("${jwt.secret:mySecretKeyForJwtTokenGenerationWhichIsLongEnough}")
+    private String jwtSecret;
+
+    private static final long EXPIRATION_TIME = 86400000; // 24 hours
+
     public LoginResponse login(LoginRequest request) {
         Optional<UserEntity> userOpt = userRepository.findByUsername(request.getUsername());
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
-            // In a real application, you would compare password hashes.
-            // Here, for this prototype, we're doing a simple string comparison.
             if (user.getPassword().equals(request.getPassword())) {
                 UserDTO userDTO = mapToDTO(user);
-                // Simple dummy token
-                String token = "dummy-jwt-token-" + user.getId();
+                String token = generateToken(user);
                 return new LoginResponse(token, userDTO);
             }
         }
         throw new RuntimeException("Invalid username or password");
+    }
+
+    private String generateToken(UserEntity user) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.builder()
+            .subject(String.valueOf(user.getId()))
+            .claim("username", user.getUsername())
+            .claim("permission", user.getRole())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+            .signWith(key)
+            .compact();
     }
 
     public List<UserDTO> getAllUsers() {

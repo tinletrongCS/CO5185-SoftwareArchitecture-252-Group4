@@ -27,14 +27,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authApi.login(credentials);
-      // Assuming response contains { token, user }
-      // Mocking the user response if API doesn't return user info but only token
-      // You may need to adjust this depending on the actual backend response
-      const token = response.data.token || 'mock-token';
-      const userInfo = response.data.user || {
-        userID: 1,
-        userName: credentials.username,
-        permission: credentials.username === 'admin' ? 'admin' : 'user', // Basic mock role assignment based on username
+      const token = response.data.token;
+      const userData = response.data.user;
+
+      if (!token) {
+        throw new Error('No token received');
+      }
+
+      const userInfo = {
+        userID: userData.id,
+        userName: userData.userName,
+        permission: userData.permission,
       };
 
       localStorage.setItem('token', token);
