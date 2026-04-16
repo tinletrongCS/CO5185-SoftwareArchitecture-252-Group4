@@ -45,6 +45,15 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/users/username/{username}")
+    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username) {
+        try {
+            return ResponseEntity.ok(authService.getUserByUsername(username));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("/users")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.createUser(userDTO));

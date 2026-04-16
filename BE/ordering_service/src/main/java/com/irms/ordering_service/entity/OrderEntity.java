@@ -25,6 +25,9 @@ public class OrderEntity {
     @Column(name = "status", nullable = false)
     private String status;
 
+    @Column(name = "user_name")
+    private String userName;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemEntity> items = new ArrayList<>();
 

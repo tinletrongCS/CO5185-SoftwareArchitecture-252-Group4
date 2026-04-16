@@ -65,12 +65,37 @@ function InventoryPage() {
   const [loading, setLoading] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
+  const [filteredInfo, setFilteredInfo] = useState({})
+  const [sortedInfo, setSortedInfo] = useState({})
 
   // Modal thêm/sửa
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [form] = Form.useForm()
   const [submitting, setSubmitting] = useState(false)
+
+  // Watch form values to detect changes
+  const formValues = Form.useWatch([], form)
+  const [hasChanges, setHasChanges] = useState(false)
+
+  useEffect(() => {
+    if (!editingItem) {
+      setHasChanges(true) // Always allow in Add mode
+      return
+    }
+    
+    // Compare current form values with editingItem
+    const isChanged = 
+      formValues?.name !== editingItem.name ||
+      formValues?.category !== editingItem.category ||
+      formValues?.price !== editingItem.price ||
+      formValues?.quantity !== editingItem.quantity ||
+      formValues?.available !== editingItem.available ||
+      formValues?.description !== (editingItem.description || '') ||
+      formValues?.imageUrl !== (editingItem.imageUrl || '')
+    
+    setHasChanges(isChanged)
+  }, [formValues, editingItem])
 
   // Modal điều chỉnh số lượng
   const [quantityModalOpen, setQuantityModalOpen] = useState(false)
@@ -87,6 +112,19 @@ function InventoryPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRefresh = () => {
+    setSearchText('')
+    setFilterCategory('all')
+    setFilteredInfo({})
+    setSortedInfo({})
+    fetchItems()
+  }
+
+  const handleChange = (pagination, filters, sorter) => {
+    setFilteredInfo(filters)
+    setSortedInfo(sorter)
   }
 
   useEffect(() => {
@@ -202,12 +240,14 @@ function InventoryPage() {
       dataIndex: 'id',
       width: 80,
       sorter: (a, b) => a.id - b.id,
+      sortOrder: sortedInfo.columnKey === 'id' && sortedInfo.order,
     },
     {
       title: 'Tên món',
       dataIndex: 'name',
       ellipsis: true,
       sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
+      sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
       render: (name, record) => (
         <Space>
           <Text strong>{name}</Text>
@@ -225,6 +265,7 @@ function InventoryPage() {
       width: 130,
       filters: CATEGORY_OPTIONS.map((c) => ({ text: c.label, value: c.value })),
       onFilter: (value, record) => record.category === value,
+      filteredValue: filteredInfo.category || null,
       render: (cat) => (
         <Tag color={CATEGORY_COLORS[cat] || 'default'}>
           {CATEGORY_LABELS[cat] || cat}
@@ -237,6 +278,7 @@ function InventoryPage() {
       width: 120,
       align: 'right',
       sorter: (a, b) => (a.price || 0) - (b.price || 0),
+      sortOrder: sortedInfo.columnKey === 'price' && sortedInfo.order,
       render: (price) => (
         <Text style={{ color: '#000000ff' }}>
           {(price || 0).toLocaleString('vi-VN')} đ
@@ -249,6 +291,7 @@ function InventoryPage() {
       width: 110,
       align: 'center',
       sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
+      sortOrder: sortedInfo.columnKey === 'quantity' && sortedInfo.order,
       render: (qty) => {
         let color = '#4c8131ff'
         if (qty <= 0) color = '#ff4d4f'
@@ -277,6 +320,7 @@ function InventoryPage() {
         { text: 'Ngưng bán', value: false },
       ],
       onFilter: (value, record) => record.available === value,
+      filteredValue: filteredInfo.available || null,
       render: (available) =>
         available ? (
           <Tag color="success">Đang bán</Tag>
@@ -405,7 +449,7 @@ function InventoryPage() {
                 ...CATEGORY_OPTIONS,
               ]}
             />
-            <Button icon={<ReloadOutlined />} onClick={fetchItems} loading={loading}>
+            <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading}>
               Làm mới
             </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd}>
@@ -419,6 +463,7 @@ function InventoryPage() {
           columns={columns}
           dataSource={filteredItems}
           loading={loading}
+          onChange={handleChange}
           pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Tổng ${total} món` }}
           scroll={{ x: 900 }}
           locale={{
@@ -444,6 +489,7 @@ function InventoryPage() {
           setEditingItem(null)
         }}
         okText={editingItem ? 'Cập nhật' : 'Thêm'}
+        okButtonProps={{ disabled: editingItem && !hasChanges }}
         cancelText="Hủy"
         width={550}
       >

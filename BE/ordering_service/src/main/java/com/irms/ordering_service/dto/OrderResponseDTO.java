@@ -14,6 +14,7 @@ public class OrderResponseDTO {
 
     private Long id;
     private String tableId;
+    private String userName;
     private List<OrderItemResponseDTO> items;
     private String status;
 }
