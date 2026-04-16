@@ -35,11 +35,14 @@ import {
   TableOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
-  TeamOutlined
+  TeamOutlined,
+  UserOutlined
 } from '@ant-design/icons'
 import { orderApi, inventoryApi, tableApi } from '../services/api'
 
 const { Title, Text } = Typography
+
+import CreateOrderModal from '../components/CreateOrderModal'
 
 const STATUS_CONFIG = {
   PENDING: { color: 'orange', label: 'Đang chờ', icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#faad14' }} /> },
@@ -74,30 +77,16 @@ function OrderPage() {
 
   // States cho Modal Tạo Đơn
   const [modalOpen, setModalOpen] = useState(false)
-  const [form] = Form.useForm()
-  const [menu, setMenu] = useState([])
-  const [menuLoading, setMenuLoading] = useState(false)
-  const [cart, setCart] = useState({})
-  const [selectedCategory, setSelectedCategory] = useState('all')
 
   // States cho danh sách bàn (tất cả bàn - dùng cho floor plan)
   const [allTables, setAllTables] = useState([])
   const [allTablesLoading, setAllTablesLoading] = useState(false)
-
-  // States cho bộ lọc bàn trong modal tạo đơn
-  const [filterZone, setFilterZone] = useState('all')
-  const [filterTableCategory, setFilterTableCategory] = useState('all')
-  const [filterCapacity, setFilterCapacity] = useState('all')
-  const [selectedTableId, setSelectedTableId] = useState(null)
 
   // States cho Modal Xem Chi Tiết
   const [detailsModalOpen, setDetailsModalOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [orderDetails, setOrderDetails] = useState(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
-
-  const [currentStep, setCurrentStep] = useState(0)
-  const [submitting, setSubmitting] = useState(false)
 
   const fetchOrders = async () => {
     setLoading(true)
@@ -108,18 +97,6 @@ function OrderPage() {
       message.error('Không thể tải danh sách đơn hàng')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchMenu = async () => {
-    setMenuLoading(true)
-    try {
-      const res = await inventoryApi.getMenu()
-      setMenu(res.data)
-    } catch (err) {
-      message.error('Không thể tải Menu')
-    } finally {
-      setMenuLoading(false)
     }
   }
 
@@ -140,102 +117,13 @@ function OrderPage() {
     fetchAllTables()
   }, [])
 
-  useEffect(() => {
-    if (modalOpen) {
-      fetchMenu()
-      fetchAllTables()
-      setSelectedCategory('all')
-      setFilterZone('all')
-      setFilterTableCategory('all')
-      setFilterCapacity('all')
-      setSelectedTableId(null)
-      setCurrentStep(0)
-    } else {
-      setCart({})
-    }
-  }, [modalOpen])
-
-  const handleAddToCart = (itemName) => {
-    setCart((prev) => ({
-      ...prev,
-      [itemName]: (prev[itemName] || 0) + 1,
-    }))
+  const handleCreateOrderSuccess = () => {
+    setModalOpen(false)
+    fetchOrders()
+    fetchAllTables()
   }
 
-  const handleRemoveFromCart = (itemName) => {
-    setCart((prev) => {
-      const newCart = { ...prev }
-      if (newCart[itemName] > 1) {
-        newCart[itemName] -= 1
-      } else {
-        delete newCart[itemName]
-      }
-      return newCart
-    })
-  }
-
-  const calculateTotal = () => {
-    let total = 0;
-    Object.keys(cart).forEach(itemName => {
-      const menuItem = menu.find(item => item.name === itemName);
-      if (menuItem) {
-        total += menuItem.price * cart[itemName];
-      }
-    });
-    return total;
-  }
-
-  const handleCreate = async () => {
-    if (submitting) return;
-    setSubmitting(true)
-    try {
-      await form.validateFields()
-
-      if (!selectedTableId) {
-        message.warning('Vui lòng chọn bàn!')
-        setSubmitting(false)
-        return
-      }
-
-      const parsedItems = Object.keys(cart).map((itemName) => {
-        const menuItem = menu.find(item => item.name === itemName);
-        return {
-          inventoryItemId: menuItem ? menuItem.id : null,
-          itemName: itemName,
-          quantity: cart[itemName],
-          unitPrice: menuItem ? menuItem.price : 0
-        }
-      })
-
-      if (parsedItems.length === 0) {
-        message.warning('Vui lòng chọn ít nhất 1 món ăn!')
-        setSubmitting(false)
-        return
-      }
-
-      const selectedTable = allTables.find(t => t.id === selectedTableId)
-
-      const payload = {
-        tableId: selectedTable ? selectedTable.tableName : String(selectedTableId),
-        items: parsedItems,
-      }
-
-      await orderApi.create(payload)
-      await tableApi.updateStatus(selectedTableId, false)
-
-      message.success('Tạo đơn hàng thành công')
-      setModalOpen(false)
-      form.resetFields()
-      setSelectedTableId(null)
-      fetchOrders()
-      fetchAllTables()
-    } catch (err) {
-      console.error(err)
-      message.error('Tạo đơn hàng thất bại')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  // handleCreate is now inside CreateOrderModal
 
   const handleUpdateStatus = async (id, status) => {
     try {
@@ -257,7 +145,6 @@ function OrderPage() {
 
       message.success('Cập nhật trạng thái thành công')
       fetchOrders()
-      fetchAllTables()
     } catch {
       message.error('Cập nhật thất bại')
     }
@@ -294,25 +181,6 @@ function OrderPage() {
     }, 0);
   }
 
-  const filteredMenu = selectedCategory === 'all'
-    ? menu
-    : menu.filter(item => item.category === selectedCategory);
-
-  // --- Bộ lọc bàn trong modal ---
-  const filteredTablesForModal = useMemo(() => {
-    return allTables.filter(t => {
-      if (filterZone !== 'all' && t.zone !== filterZone) return false
-      if (filterTableCategory !== 'all' && t.category !== filterTableCategory) return false
-      if (filterCapacity !== 'all' && t.capacity < Number(filterCapacity)) return false
-      return true
-    })
-  }, [allTables, filterZone, filterTableCategory, filterCapacity])
-
-  // --- Danh sách zone, category, capacity duy nhất ---
-  const uniqueZones = useMemo(() => [...new Set(allTables.map(t => t.zone))], [allTables])
-  const uniqueCategories = useMemo(() => [...new Set(allTables.map(t => t.category))], [allTables])
-  const uniqueCapacities = useMemo(() => [...new Set(allTables.map(t => t.capacity))].sort((a, b) => a - b), [allTables])
-
   // --- Nhóm bàn theo zone cho floor plan ---
   const tablesByZone = useMemo(() => {
     const grouped = {}
@@ -338,17 +206,11 @@ function OrderPage() {
             <div><strong>{table.tableName}</strong></div>
             <div>{table.capacity} chỗ — {CATEGORY_LABELS[table.category] || table.category}</div>
             <div>{table.description}</div>
-            <div>{isAvailable ? '✅ Còn trống' : '🔴 Đang sử dụng'}</div>
+            <div>{isAvailable ? '🟢 Còn trống' : '🔴 Đang sử dụng'}</div>
           </div>
         }
       >
         <div
-          onClick={() => {
-            if (isClickable && isAvailable) {
-              setSelectedTableId(table.id)
-              form.setFieldsValue({ tableId: table.id })
-            }
-          }}
           style={{
             width: 64,
             height: 52,
@@ -390,7 +252,7 @@ function OrderPage() {
               <Tag color="red" style={{ borderRadius: 2 }}>{allTables.filter(t => !t.available).length} đang dùng</Tag>
             </Space>
           </div>
-          <Button size="small" icon={<ReloadOutlined />} onClick={fetchAllTables}>Cập nhật</Button>
+          {/* <Button size="small" icon={<ReloadOutlined />} onClick={fetchAllTables}>Cập nhật</Button> */}
         </div>
         <Card
           size="small"
@@ -442,9 +304,14 @@ function OrderPage() {
         bodyStyle={{ padding: 12 }}
         hoverable
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
           <Text strong style={{ fontSize: 16 }}><TableOutlined /> {order.tableId}</Text>
           <Text type="secondary">#{order.id}</Text>
+        </div>
+
+        <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center' }}>
+          <UserOutlined style={{ marginRight: 6, fontSize: 12, color: '#8c8c8c' }} />
+          <Text type="secondary" style={{ fontSize: 12 }}>{order.userName || 'Ẩn danh'}</Text>
         </div>
 
         <div style={{ marginBottom: 12 }}>
@@ -463,7 +330,7 @@ function OrderPage() {
             <Button
               size="small"
               type="text"
-              icon={<EyeOutlined />}
+              icon={<EyeOutlined style={{ color: '#1677ff' }} />}
               onClick={() => handleViewDetails(order)}
             />
             {order.status === 'PENDING' && (
@@ -515,43 +382,7 @@ function OrderPage() {
     )
   }
 
-  // --- RENDER MINI MAP TRONG MODAL ---
-  const renderMiniMapInModal = () => {
-    const grouped = {}
-    filteredTablesForModal.forEach(t => {
-      if (!grouped[t.zone]) grouped[t.zone] = []
-      grouped[t.zone].push(t)
-    })
-
-    if (filteredTablesForModal.length === 0) {
-      return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không tìm thấy bàn phù hợp" />
-    }
-
-    return (
-      <div style={{ border: '1px solid #f0f0f0', borderRadius: 2, padding: 12, background: '#fafafa' }}>
-        {Object.entries(grouped).map(([zone, zoneTables]) => (
-          <div key={zone} style={{ marginBottom: 12 }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: 6,
-              padding: '2px 8px',
-              background: `${ZONE_COLORS[zone]}10`,
-              borderRadius: 2,
-            }}>
-              <EnvironmentOutlined style={{ color: ZONE_COLORS[zone], marginRight: 6, fontSize: 12 }} />
-              <Text strong style={{ color: ZONE_COLORS[zone], fontSize: 12 }}>
-                {ZONE_LABELS[zone] || zone}
-              </Text>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-              {zoneTables.map(table => renderTableCell(table, true, selectedTableId === table.id))}
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  // renderMiniMapInModal was moved to CreateOrderModal
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
@@ -607,7 +438,10 @@ function OrderPage() {
       >
         {selectedOrder && (
           <div style={{ padding: '10px 0' }}>
-            <p><strong>Bàn phục vụ:</strong> <Tag color="geekblue" style={{ fontSize: 14 }}>{selectedOrder.tableId}</Tag></p>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+              <div><strong>Bàn phục vụ:</strong> <Tag color="geekblue" style={{ fontSize: 14 }}>{selectedOrder.tableId}</Tag></div>
+              <div><strong>Người đặt:</strong> <Tag color="orange" style={{ fontSize: 14 }}>{selectedOrder.userName || 'Ẩn danh'}</Tag></div>
+            </div>
             <Divider orientation="left">Danh sách món ăn</Divider>
             <Spin spinning={detailsLoading}>
               <List
@@ -626,7 +460,7 @@ function OrderPage() {
             </Spin>
             <Divider dashed />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fffbe6', padding: '12px 16px', borderRadius: 2, border: '1px solid #ffe58f' }}>
-              <Title level={4} style={{ margin: 0 }}>Tổng cộng:</Title>
+              <Title level={4} style={{ margin: 0 }}>Tổng cộng (Chưa bao gồm VAT):</Title>
               <Title level={3} type="danger" style={{ margin: 0 }}>
                 {calculateFinalPrice().toLocaleString('vi-VN')} đ
               </Title>
@@ -635,313 +469,12 @@ function OrderPage() {
         )}
       </Modal>
 
-      {/* --- MODAL TẠO ĐƠN (WIZARD) --- */}
-      <Modal
-        title={
-          <div style={{ marginBottom: 16 }}>
-            <Title level={4} style={{ margin: 0, marginBottom: 16 }}>Tạo đơn hàng mới</Title>
-            <Steps
-              current={currentStep}
-              size="small"
-              items={[
-                { title: 'Chọn bàn', icon: <TableOutlined /> },
-                { title: 'Chọn món', icon: <PlusOutlined /> },
-                { title: 'Chốt đơn', icon: <CheckCircleOutlined /> },
-              ]}
-            />
-          </div>
-        }
+      {/* --- MODAL TẠO ĐƠN (REUSABLE) --- */}
+      <CreateOrderModal
         open={modalOpen}
-        onCancel={() => {
-          setModalOpen(false)
-          form.resetFields()
-          setSelectedTableId(null)
-          setCurrentStep(0)
-        }}
-        width={800}
-        footer={[
-          currentStep > 0 && (
-            <Button key="back" onClick={() => setCurrentStep(currentStep - 1)}>
-              Quay lại
-            </Button>
-          ),
-          currentStep < 2 ? (
-            <Button
-              key="next"
-              type="primary"
-              onClick={() => {
-                if (currentStep === 0 && !selectedTableId) {
-                  message.warning('Vui lòng chọn bàn!')
-                  return
-                }
-                if (currentStep === 1 && Object.keys(cart).length === 0) {
-                  message.warning('Vui lòng chọn ít nhất 1 món!')
-                  return
-                }
-                setCurrentStep(currentStep + 1)
-              }}
-            >
-              Tiếp tục
-            </Button>
-          ) : (
-            <Button
-              key="submit"
-              type="primary"
-              onClick={handleCreate}
-              loading={submitting}
-              disabled={submitting}
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            >
-              Xác nhận & Đặt món
-            </Button>
-          ),
-        ]}
-      >
-        <div style={{ minHeight: 400, marginTop: 24 }}>
-          {/* STEP 1: CHỌN BÀN */}
-          {currentStep === 0 && (
-            <Form form={form} layout="vertical">
-              <Divider orientation="left" style={{ marginTop: 0 }}>
-                <Space><EnvironmentOutlined /> Khu vực & Loại bàn</Space>
-              </Divider>
-
-              <Row gutter={12} style={{ marginBottom: 12 }}>
-                <Col span={8}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Khu vực</Text>
-                  <Select
-                    value={filterZone}
-                    onChange={(v) => { setFilterZone(v); setSelectedTableId(null); }}
-                    style={{ width: '100%' }}
-                    options={[
-                      { value: 'all', label: 'Tất cả khu vực' },
-                      ...uniqueZones.map(z => ({ value: z, label: ZONE_LABELS[z] || z }))
-                    ]}
-                  />
-                </Col>
-                <Col span={8}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Loại bàn</Text>
-                  <Select
-                    value={filterTableCategory}
-                    onChange={(v) => { setFilterTableCategory(v); setSelectedTableId(null); }}
-                    style={{ width: '100%' }}
-                    options={[
-                      { value: 'all', label: 'Tất cả loại' },
-                      ...uniqueCategories.map(c => ({ value: c, label: CATEGORY_LABELS[c] || c }))
-                    ]}
-                  />
-                </Col>
-                <Col span={8}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Số chỗ tối thiểu</Text>
-                  <Select
-                    value={filterCapacity}
-                    onChange={(v) => { setFilterCapacity(v); setSelectedTableId(null); }}
-                    style={{ width: '100%' }}
-                    options={[
-                      { value: 'all', label: 'Tất cả' },
-                      ...uniqueCapacities.map(c => ({ value: String(c), label: `${c}+ chỗ` }))
-                    ]}
-                  />
-                </Col>
-              </Row>
-
-              <div style={{ marginBottom: 16 }}>
-                <Text strong>Sơ đồ chọn bàn (Click vào bàn trống):</Text>
-                <div style={{ marginTop: 12, maxHeight: 250, overflowY: 'auto' }}>
-                  {renderMiniMapInModal()}
-                </div>
-              </div>
-
-              {selectedTableId && (() => {
-                const t = allTables.find(x => x.id === selectedTableId)
-                return t ? (
-                  <div style={{ padding: '12px 16px', background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Space size="large">
-                      <Space><TableOutlined style={{ color: '#1890ff' }} /><Text strong>{t.tableName}</Text></Space>
-                      <Tag color="blue">{ZONE_LABELS[t.zone] || t.zone}</Tag>
-                      <Tag><TeamOutlined /> {t.capacity} chỗ</Tag>
-                    </Space>
-                    <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} />
-                  </div>
-                ) : null
-              })()}
-
-              <Form.Item name="tableId" hidden rules={[{ required: true, message: 'Vui lòng chọn bàn!' }]}>
-                <input />
-              </Form.Item>
-            </Form>
-          )}
-
-          {/* STEP 2: CHỌN MÓN */}
-          {currentStep === 1 && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-                <Radio.Group
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  buttonStyle="solid"
-                >
-                  <Radio.Button value="all">Tất cả</Radio.Button>
-                  <Radio.Button value="mon_kho">Món khô</Radio.Button>
-                  <Radio.Button value="do_nuoc">Món nước</Radio.Button>
-                  <Radio.Button value="do_uong">Đồ uống</Radio.Button>
-                  <Radio.Button value="trang_mieng">Tráng miệng</Radio.Button>
-                </Radio.Group>
-              </div>
-
-              <div style={{ height: 350, overflowY: 'auto', border: '1px solid #f0f0f0', borderRadius: 2, padding: 8 }}>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={filteredMenu}
-                  loading={menuLoading}
-                  renderItem={(item) => {
-                    const qty = cart[item.name] || 0;
-                    const isOutOfStock = (item.quantity || 0) <= qty;
-                    return (
-                      <List.Item
-                        style={{
-                          border: qty > 0 ? '1px solid #1890ff' : '1px solid transparent',
-                          borderRadius: 2,
-                          backgroundColor: qty > 0 ? '#e6f7ff' : 'transparent',
-                          opacity: (item.quantity <= 0 && qty === 0) ? 0.6 : 1,
-                          transition: 'all 0.2s ease',
-                          padding: '8px 12px'
-                        }}
-                        actions={[
-                          <Space key="actions">
-                            <Button
-                              size="small"
-                              shape="circle"
-                              icon={<MinusOutlined />}
-                              disabled={qty === 0}
-                              onClick={() => handleRemoveFromCart(item.name)}
-                            />
-                            <Text strong style={{ width: 24, textAlign: 'center', display: 'inline-block' }}>{qty}</Text>
-                            <Button
-                              size="small"
-                              type="primary"
-                              shape="circle"
-                              icon={<PlusOutlined />}
-                              disabled={isOutOfStock}
-                              onClick={() => handleAddToCart(item.name)}
-                            />
-                          </Space>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          title={
-                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingRight: 20 }}>
-                              <span>{item.name}</span>
-                              <Text type="success" strong>{item.price.toLocaleString('vi-VN')} đ</Text>
-                            </div>
-                          }
-                          description={
-                            <Space split={<Divider type="vertical" />}>
-                              <Text type="secondary" style={{ fontSize: 12 }}>{item.description}</Text>
-                              <Tag color={((item.quantity || 0) - qty) <= 5 ? 'volcano' : 'green'} style={{ fontSize: 11 }}>
-                                Còn {(item.quantity || 0) - qty}
-                              </Tag>
-                            </Space>
-                          }
-                        />
-                      </List.Item>
-                    )
-                  }}
-                />
-              </div>
-
-              <Divider orientation="left">Các món bạn đã chọn</Divider>
-              <Card size="small" style={{ backgroundColor: '#fafafa' }}>
-                {Object.keys(cart).length === 0 ? (
-                  <Text type="secondary">Chưa có món nào được chọn...</Text>
-                ) : (
-                  <>
-                    <Space wrap style={{ marginBottom: 16 }}>
-                      {Object.keys(cart).map((itemName) => (
-                        <Tag key={itemName} color="cyan" style={{ padding: '4px 8px', fontSize: 14 }}>
-                          {itemName} <Text strong type="danger">x {cart[itemName]}</Text>
-                        </Tag>
-                      ))}
-                    </Space>
-                    <Divider style={{ margin: '8px 0' }} dashed />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text strong>Tạm tính:</Text>
-                      <Title level={4} type="danger" style={{ margin: 0 }}>
-                        {calculateTotal().toLocaleString('vi-VN')} đ
-                      </Title>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </div>
-          )}
-
-          {/* STEP 3: XÁC NHẬN */}
-          {currentStep === 2 && (
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a' }} />
-                <Title level={4} style={{ marginTop: 16 }}>Kiểm tra lại thông tin</Title>
-              </div>
-
-              <Row gutter={24}>
-                <Col span={10}>
-                  <Card title="Thông tin bàn" size="small" style={{ borderRadius: 2 }}>
-                    {(() => {
-                      const t = allTables.find(x => x.id === selectedTableId)
-                      return t ? (
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Text type="secondary">Tên bàn:</Text>
-                            <Text strong>{t.tableName}</Text>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Text type="secondary">Khu vực:</Text>
-                            <Tag color="blue">{ZONE_LABELS[t.zone] || t.zone}</Tag>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Text type="secondary">Sức chứa:</Text>
-                            <Text>{t.capacity} khách</Text>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Text type="secondary">Loại:</Text>
-                            <Text>{CATEGORY_LABELS[t.category] || t.category}</Text>
-                          </div>
-                        </Space>
-                      ) : null
-                    })()}
-                  </Card>
-                </Col>
-                <Col span={14}>
-                  <Card title="Danh sách món ăn" size="small" style={{ borderRadius: 2 }}>
-                    <List
-                      size="small"
-                      dataSource={Object.keys(cart)}
-                      renderItem={itemName => {
-                        const item = menu.find(m => m.name === itemName)
-                        return (
-                          <List.Item style={{ padding: '8px 0' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                              <Text>{itemName} <Text type="secondary">x {cart[itemName]}</Text></Text>
-                              <Text strong>{(cart[itemName] * (item?.price || 0)).toLocaleString('vi-VN')} đ</Text>
-                            </div>
-                          </List.Item>
-                        )
-                      }}
-                    />
-                    <Divider style={{ margin: '12px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text strong style={{ fontSize: 16 }}>Tổng cộng:</Text>
-                      <Text strong type="danger" style={{ fontSize: 20 }}>
-                        {calculateTotal().toLocaleString('vi-VN')} đ
-                      </Text>
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-            </div>
-          )}
-        </div>
-      </Modal>
+        onCancel={() => setModalOpen(false)}
+        onSuccess={handleCreateOrderSuccess}
+      />
     </div>
   )
 }

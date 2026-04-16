@@ -40,6 +40,7 @@ public class OrderServiceImpl implements OrderService {
     private static OrderEntity getOrder(OrderRequestDTO orderRequestDTO) {
         OrderEntity order = new OrderEntity();
         order.setTableId(orderRequestDTO.getTableId());
+        order.setUserName(orderRequestDTO.getUserName());
         order.setStatus("PENDING");
 
         if (orderRequestDTO.getItems() != null) {
@@ -105,6 +106,7 @@ public class OrderServiceImpl implements OrderService {
         return new OrderResponseDTO(
                 entity.getId(),
                 entity.getTableId(),
+                entity.getUserName(),
                 itemDTOs,
                 entity.getStatus()
         );

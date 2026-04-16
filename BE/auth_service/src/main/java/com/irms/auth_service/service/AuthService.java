@@ -43,6 +43,11 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    public UserDTO getUserByUsername(String username) {
+        return userRepository.findByUsername(username).map(this::mapToDTO)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    }
+
     public UserDTO createUser(UserDTO userDTO) {
         UserEntity user = new UserEntity();
         user.setUsername(userDTO.getUserName());

@@ -23,6 +23,13 @@ const CATEGORY_LABELS = {
   trang_mieng: 'Tráng miệng',
 }
 
+const CATEGORY_COLORS = {
+  mon_kho: 'volcano',
+  do_nuoc: 'blue',
+  do_uong: 'cyan',
+  trang_mieng: 'magenta',
+}
+
 function MenuView() {
   const [menu, setMenu] = useState([])
   const [loading, setLoading] = useState(false)
@@ -51,7 +58,7 @@ function MenuView() {
   return (
     <div style={{ padding: '0 16px' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={2}>Thực Đơn Nhà Hàng</Title>
+        <Title level={2}>Thực đơn</Title>
         <Text type="secondary">Chào mừng bạn đến với IRMS. Chúc bạn có một bữa ăn ngon miệng!</Text>
       </div>
 
@@ -115,7 +122,7 @@ function MenuView() {
                             justifyContent: 'center'
                           }}>
                             <Tag color="default" style={{ fontSize: 14, padding: '4px 12px', fontWeight: 'bold', borderRadius: 2 }}>
-                              {!item.available ? 'NGƯNG PHỤC VỤ' : 'TẠM HẾT MÓN'}
+                              {!item.ava ? 'NGƯNG PHỤC VỤ' : 'TẠM HẾT MÓN'}
                             </Tag>
                           </div>
                         )}
@@ -124,8 +131,10 @@ function MenuView() {
                     style={{ 
                       borderRadius: 2, 
                       overflow: 'hidden', 
-                      opacity: isUnavailable ? 0.6 : 1,
-                      cursor: isUnavailable ? 'not-allowed' : 'pointer'
+                      opacity: isUnavailable ? 0.4 : 1,
+                      cursor: isUnavailable ? 'not-allowed' : 'pointer',
+                      backgroundColor: isUnavailable ? '#fafafae8' : '#fff',
+                      transition: 'all 0.3s'
                     }}
                   >
                     <Card.Meta
@@ -145,7 +154,7 @@ function MenuView() {
                             <Text strong type={isUnavailable ? 'secondary' : 'success'} style={{ fontSize: 18 }}>
                               {item.price.toLocaleString('vi-VN')} đ
                             </Text>
-                            <Tag color={isUnavailable ? 'default' : 'blue'}>
+                            <Tag color={isUnavailable ? 'default' : (CATEGORY_COLORS[item.category] || 'blue')}>
                               {CATEGORY_LABELS[item.category] || item.category}
                             </Tag>
                           </div>

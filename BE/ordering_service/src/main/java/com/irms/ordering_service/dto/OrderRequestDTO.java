@@ -7,5 +7,6 @@ import lombok.Data;
 public class OrderRequestDTO {
 
     private String tableId;
+    private String userName;
     private List<OrderItemRequestDTO> items;
 }

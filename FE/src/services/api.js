@@ -38,6 +38,7 @@ export const authApi = {
 export const userApi = {
   getAll: () => axiosInstance.get('/auth/users'),
   getById: (id) => axiosInstance.get(`/auth/users/${id}`),
+  getByUsername: (username) => axiosInstance.get(`/auth/users/username/${username}`),
   create: (data) => axiosInstance.post('/auth/users', data),
   update: (id, data) => axiosInstance.put(`/auth/users/${id}`, data),
   delete: (id) => axiosInstance.delete(`/auth/users/${id}`),
