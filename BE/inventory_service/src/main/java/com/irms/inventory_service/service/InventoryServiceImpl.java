@@ -20,11 +20,11 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final RabbitTemplate rabbitTemplate;
 
-    // chỉ lấy những món available hiện lên menu 
+    // lấy hết bao gồm cả những món đã hết hoặc ngưng phục vụ 
     @Override
     public List<InventoryItemResponseDTO> getMenu() 
     {
-        return inventoryRepository.findByAvailableTrue()
+        return inventoryRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -33,7 +33,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public List<InventoryItemResponseDTO> getMenuByCategory(String category) 
     {
-        return inventoryRepository.findByCategoryAndAvailableTrue(category)
+        return inventoryRepository.findByCategory(category)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();

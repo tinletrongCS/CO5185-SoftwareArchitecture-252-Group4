@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout, Menu, Typography, Button, Divider } from 'antd';
+import { Layout, Menu, Typography, Button, Divider, message } from 'antd';
 import {
   UserOutlined,
   DashboardOutlined,
@@ -12,6 +12,7 @@ import UserTable from '../components/UserTable';
 import OrderPage from './OrderPage';
 import InventoryPage from './InventoryPage';
 import MenuView from '../components/MenuView';
+import CreateOrderModal from '../components/CreateOrderModal';
 import './DashboardPage.css';
 
 const { Header, Content, Sider } = Layout;
@@ -20,6 +21,7 @@ const { Title, Text } = Typography;
 const DashboardPage = () => {
   const { user, logout } = useAuth();
   const [selectedKey, setSelectedKey] = useState('1');
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
 
   // Define menu items based on user role
   const menuItems = [
@@ -53,14 +55,34 @@ const DashboardPage = () => {
       case '1':
         return (
           <div>
-            <div style={{ marginBottom: 24 }}>
-              <Title level={3}>Xin chào, {user?.userName}!</Title>
-              <Text type="secondary">Vai trò: {user?.permission}</Text>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <Title level={3}>Xin chào, {user?.userName}!</Title>
+                {/* <Text type="secondary">Vai trò: {user?.permission}</Text> */}
+              </div>
+              <Button 
+                type="primary" 
+                size="large" 
+                icon={<ShoppingCartOutlined />} 
+                onClick={() => setOrderModalOpen(true)}
+                style={{ height: 42, borderRadius: 2, padding: '0 32px', fontSize: 16, fontWeight: 'bold', background: '#52c41a', color: '#ffffffff'}}
+              >
+                Đặt món ngay
+              </Button>
             </div>
             
             {/* Show Menu for everyone in Overview, but it's the ONLY thing for regular users */}
             <Divider />
             <MenuView />
+
+            <CreateOrderModal 
+              open={orderModalOpen} 
+              onCancel={() => setOrderModalOpen(false)} 
+              onSuccess={() => {
+                setOrderModalOpen(false);
+                message.success('Đơn hàng của bạn đã được tiếp nhận!');
+              }} 
+            />
           </div>
         );
       case '2':

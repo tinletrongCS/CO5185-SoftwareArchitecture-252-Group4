@@ -14,6 +14,23 @@ const UserTable = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
 
+  // Watch form values to detect changes
+  const formValues = Form.useWatch([], form);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    if (!editingUser) {
+      setHasChanges(true); // Always allow for new users
+      return;
+    }
+    const isChanged = 
+      formValues?.userName !== editingUser.userName ||
+      formValues?.password !== editingUser.password ||
+      formValues?.permission !== editingUser.permission;
+    
+    setHasChanges(isChanged);
+  }, [formValues, editingUser]);
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -162,6 +179,7 @@ const UserTable = () => {
         onOk={handleOk}
         onCancel={handleCancel}
         okText="Lưu"
+        okButtonProps={{ disabled: editingUser && !hasChanges }}
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical" name="userForm">
