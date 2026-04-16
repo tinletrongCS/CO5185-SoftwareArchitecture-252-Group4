@@ -77,7 +77,7 @@ function OrderPage() {
 
   // States cho Modal Tạo Đơn
   const [modalOpen, setModalOpen] = useState(false)
-  
+
   // States cho danh sách bàn (tất cả bàn - dùng cho floor plan)
   const [allTables, setAllTables] = useState([])
   const [allTablesLoading, setAllTablesLoading] = useState(false)
@@ -145,7 +145,6 @@ function OrderPage() {
 
       message.success('Cập nhật trạng thái thành công')
       fetchOrders()
-      fetchAllTables()
     } catch {
       message.error('Cập nhật thất bại')
     }
@@ -331,7 +330,7 @@ function OrderPage() {
             <Button
               size="small"
               type="text"
-              icon={<EyeOutlined style={{ color: '#1677ff' }}/>}
+              icon={<EyeOutlined style={{ color: '#1677ff' }} />}
               onClick={() => handleViewDetails(order)}
             />
             {order.status === 'PENDING' && (
@@ -471,10 +470,10 @@ function OrderPage() {
       </Modal>
 
       {/* --- MODAL TẠO ĐƠN (REUSABLE) --- */}
-      <CreateOrderModal 
-        open={modalOpen} 
-        onCancel={() => setModalOpen(false)} 
-        onSuccess={handleCreateOrderSuccess} 
+      <CreateOrderModal
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onSuccess={handleCreateOrderSuccess}
       />
     </div>
   )
