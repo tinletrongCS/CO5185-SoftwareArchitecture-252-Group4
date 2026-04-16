@@ -246,7 +246,7 @@ function OrderPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <EnvironmentOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
-            <Title level={4} style={{ margin: 0, marginRight: 16 }}>Sơ đồ nhà hàng</Title>
+            <Title level={4} style={{ margin: 0, marginRight: 16 }}>Danh sách bàn</Title>
             <Space>
               <Tag color="green" style={{ borderRadius: 2 }}>{allTables.filter(t => t.available).length} trống</Tag>
               <Tag color="red" style={{ borderRadius: 2 }}>{allTables.filter(t => !t.available).length} đang dùng</Tag>
@@ -403,7 +403,7 @@ function OrderPage() {
       {/* --- KANBAN BOARD --- */}
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
         <TableOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
-        <Title level={4} style={{ margin: 0 }}>Quản lý đơn hàng</Title>
+        <Title level={4} style={{ margin: 0 }}>Quản lý đơn đặt món</Title>
       </div>
       <Spin spinning={loading}>
         <Row gutter={16}>

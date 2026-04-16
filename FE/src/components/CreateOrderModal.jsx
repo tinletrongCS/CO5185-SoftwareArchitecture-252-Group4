@@ -28,7 +28,9 @@ import {
   TableOutlined,
   EnvironmentOutlined,
   TeamOutlined,
-  UserOutlined
+  UserOutlined,
+  AppstoreOutlined,
+  GiKnifeFork
 } from '@ant-design/icons'
 import { orderApi, inventoryApi, tableApi, userApi } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -240,7 +242,7 @@ const CreateOrderModal = ({ open, onCancel, onSuccess }) => {
       message.success({
         content: (
           <>
-            Nhấn <span style={{ fontWeight: 600 }}>Xác nhận & Đặt món</span> để hoàn tất
+            Nhấn <span style={{ fontWeight: 600 }}>Xác nhận & Đặt món</span> để tạo đơn đặt món
           </>
         ),
         className: 'custom-message',})
@@ -378,8 +380,8 @@ const CreateOrderModal = ({ open, onCancel, onSuccess }) => {
             size="small"
             items={[
               { title: 'Chọn bàn', icon: <TableOutlined /> },
-              { title: 'Chọn món', icon: <PlusOutlined /> },
-              { title: 'Chốt đơn', icon: <CheckCircleOutlined /> },
+              { title: 'Chọn món', icon: <AppstoreOutlined /> },
+              { title: 'Hoàn tất', icon: <CheckCircleOutlined /> },
             ]}
           />
         </div>
