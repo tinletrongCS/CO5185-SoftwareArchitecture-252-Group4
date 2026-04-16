@@ -314,18 +314,7 @@ function OrderPage() {
           <Text type="secondary" style={{ fontSize: 12 }}>{order.userName || 'Ẩn danh'}</Text>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <Space wrap size={[0, 4]}>
-            {(order.items || []).map((item, idx) => (
-              <Tag key={idx} style={{ fontSize: 11, borderRadius: 2 }}>
-                {item.itemName} x{item.quantity}
-              </Tag>
-            ))}
-          </Space>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text strong type="danger">{totalPrice.toLocaleString('vi-VN')} đ</Text>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           <Space>
             <Button
               size="small"

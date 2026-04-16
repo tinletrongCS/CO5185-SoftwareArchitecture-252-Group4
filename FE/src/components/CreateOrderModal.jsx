@@ -29,8 +29,7 @@ import {
   EnvironmentOutlined,
   TeamOutlined,
   UserOutlined,
-  AppstoreOutlined,
-  GiKnifeFork
+  AppstoreOutlined
 } from '@ant-design/icons'
 import { orderApi, inventoryApi, tableApi, userApi } from '../services/api'
 import { useAuth } from '../context/AuthContext'
