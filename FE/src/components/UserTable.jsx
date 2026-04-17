@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Modal, message, Spin, Form, Input, Select } from 'antd';
+import { Table, Button, Space, Modal, message, Spin, Form, Input, Select, Row, Col } from 'antd';
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { userApi } from '../services/api';
 
@@ -79,8 +79,11 @@ const UserTable = () => {
     if (user) {
       form.setFieldsValue({
         userName: user.userName,
-        password: user.password, // Mật khẩu có thể không nên hiển thị, nhưng tùy theo yêu cầu
+        password: user.password,
         permission: user.permission,
+        fullname: user.fullname || '',
+        phone: user.phone || '',
+        email: user.email || '',
       });
     } else {
       form.resetFields();
@@ -116,6 +119,7 @@ const UserTable = () => {
       title: 'Mã Người Dùng',
       dataIndex: 'userID',
       key: 'userID',
+      width: 70,
     },
     {
       title: 'Tên Đăng Nhập',
@@ -123,14 +127,25 @@ const UserTable = () => {
       key: 'userName',
     },
     {
-      title: 'Mật Khẩu',
-      dataIndex: 'password',
-      key: 'password',
+      title: 'Họ và Tên',
+      dataIndex: 'fullname',
+      key: 'fullname',
+    },
+    {
+      title: 'Số Điện Thoại',
+      dataIndex: 'phone',
+      key: 'phone',
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
     },
     {
       title: 'Quyền Hạn',
       dataIndex: 'permission',
       key: 'permission',
+      width: 120,
       render: (text) => (
         <span style={{ 
           color: text === 'admin' ? 'red' : text === 'manager' ? 'orange' : 'green',
@@ -144,6 +159,7 @@ const UserTable = () => {
     {
       title: 'Thao Tác',
       key: 'action',
+      width: 150,
       render: (_, record) => (
         <Space size="middle">
           <Button type="primary" size="small" onClick={() => showModal(record)}>Sửa</Button>
@@ -197,6 +213,30 @@ const UserTable = () => {
           >
             <Input.Password />
           </Form.Item>
+          <Form.Item
+            name="fullname"
+            label="Họ và Tên"
+          >
+            <Input />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="phone"
+                label="Số Điện Thoại"
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="email"
+                label="Email"
+              >
+                <Input type="email" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
             name="permission"
             label="Quyền Hạn"

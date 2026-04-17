@@ -9,6 +9,7 @@ public interface OrderService {
 
     OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO);
     List<OrderResponseDTO> getAllOrders();
+    List<OrderResponseDTO> getOrdersByUser(String userName);
     OrderResponseDTO getOrderById(Long id);
     OrderResponseDTO updateOrderStatus(Long id, String status);
 

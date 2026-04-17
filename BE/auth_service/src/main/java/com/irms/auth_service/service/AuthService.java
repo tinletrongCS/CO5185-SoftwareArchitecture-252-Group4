@@ -9,6 +9,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -29,11 +30,13 @@ public class AuthService {
 
     private static final long EXPIRATION_TIME = 86400000; // 24 hours
 
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     public LoginResponse login(LoginRequest request) {
         Optional<UserEntity> userOpt = userRepository.findByUsername(request.getUsername());
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
-            if (user.getPassword().equals(request.getPassword())) {
+            if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 UserDTO userDTO = mapToDTO(user);
                 String token = generateToken(user);
                 return new LoginResponse(token, userDTO);
@@ -71,8 +74,11 @@ public class AuthService {
     public UserDTO createUser(UserDTO userDTO) {
         UserEntity user = new UserEntity();
         user.setUsername(userDTO.getUserName());
-        user.setPassword(userDTO.getPassword());
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setRole(userDTO.getPermission() != null ? userDTO.getPermission() : "user");
+        user.setFullname(userDTO.getFullname());
+        user.setPhone(userDTO.getPhone());
+        user.setEmail(userDTO.getEmail());
         user = userRepository.save(user);
         return mapToDTO(user);
     }
@@ -81,8 +87,15 @@ public class AuthService {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setUsername(userDTO.getUserName());
-        user.setPassword(userDTO.getPassword());
-        user.setRole(userDTO.getPermission() != null ? userDTO.getPermission() : "user");
+        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
+        if (userDTO.getPermission() != null && !userDTO.getPermission().isEmpty()) {
+            user.setRole(userDTO.getPermission());
+        }
+        user.setFullname(userDTO.getFullname());
+        user.setPhone(userDTO.getPhone());
+        user.setEmail(userDTO.getEmail());
         user = userRepository.save(user);
         return mapToDTO(user);
     }
@@ -92,6 +105,6 @@ public class AuthService {
     }
 
     private UserDTO mapToDTO(UserEntity user) {
-        return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getRole());
+        return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.getFullname(), user.getPhone(), user.getEmail());
     }
 }
