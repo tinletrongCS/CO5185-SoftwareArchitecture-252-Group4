@@ -67,7 +67,7 @@ const InvoiceModal = ({ open, orderId, onClose }) => {
             onCancel={onClose}
             footer={[
                 <Button key="close" type="primary" onClick={onClose} style={{ width: '100%' }}>
-                    Đóng ({loading ? 'Đang tạo...' : 'Đang chờ xác nhận'})
+                    Đóng ({loading ? 'Đang tạo...' : 'Đang chờ thanh toán'})
                 </Button>
             ]}
             centered
@@ -81,14 +81,14 @@ const InvoiceModal = ({ open, orderId, onClose }) => {
             ) : (
                 <div style={{ marginTop: 20 }}>
                     <div style={{ marginBottom: 15 }}>
-                        <Text strong>Mã đơn hàng:</Text> DH{invoiceData.orderId} <br/>
-                        <Text strong>Bàn:</Text> {invoiceData.tableId} <br/>
-                        <Text strong>Nhân viên/Khách:</Text> {invoiceData.userName} <br/>
+                        <Text strong>Mã đơn hàng:</Text> DH{invoiceData.orderId} <br />
+                        <Text strong>Bàn:</Text> {invoiceData.tableId} <br />
+                        <Text strong>Người đặt:</Text> {invoiceData.userName} <br />
                     </div>
-                    
-                    <Table 
-                        dataSource={invoiceData.items} 
-                        columns={columns} 
+
+                    <Table
+                        dataSource={invoiceData.items}
+                        columns={columns}
                         pagination={false}
                         size="small"
                         rowKey="id"
@@ -106,13 +106,13 @@ const InvoiceModal = ({ open, orderId, onClose }) => {
 
                     <div style={{ textAlign: 'center', marginTop: 30, padding: 15, border: '1px dashed #ccc', borderRadius: 8 }}>
                         <Title level={5}><QrcodeOutlined /> Quét mã để thanh toán</Title>
-                        <img 
-                            src={invoiceData.qrUrl} 
-                            alt="Mã QR Thanh Toán" 
+                        <img
+                            src={invoiceData.qrUrl}
+                            alt="Mã QR Thanh Toán"
                             style={{ width: '200px', height: '200px', objectFit: 'contain' }}
                         />
                         <div style={{ marginTop: 10 }}>
-                            <Text type="secondary">Nội dung chuyển khoản tự động:</Text><br/>
+                            <Text type="secondary">Nội dung chuyển khoản tự động:</Text><br />
                             <Text strong>Thanh toan DH{invoiceData.orderId}</Text>
                         </div>
                     </div>
