@@ -27,6 +27,11 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
+    @GetMapping("/user/{userName}")
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByUser(@PathVariable String userName) {
+        return ResponseEntity.ok(orderService.getOrdersByUser(userName));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));

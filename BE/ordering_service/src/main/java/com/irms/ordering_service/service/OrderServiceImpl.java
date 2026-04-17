@@ -71,6 +71,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public List<OrderResponseDTO> getOrdersByUser(String userName) {
+        return orderRepository.findByUserName(userName)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    @Override
     public OrderResponseDTO getOrderById(Long id) {
         OrderEntity order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found: " + id));

@@ -13,6 +13,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     List<OrderEntity> findByStatus(String status);
 
+    List<OrderEntity> findByUserName(String userName);
+
     List<OrderEntity> findByTableId(String tableId);
 
     @Query("SELECT o FROM OrderEntity o WHERE o.tableId = :tableId AND o.status = :status")

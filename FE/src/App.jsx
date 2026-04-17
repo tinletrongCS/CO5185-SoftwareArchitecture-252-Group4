@@ -3,6 +3,8 @@ import { AuthProvider } from './context/AuthContext';
 import OrderPage from './pages/OrderPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import MyOrdersPage from './pages/MyOrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/order" element={<OrderPage />} />
+            <Route path="/me" element={<ProfilePage />} />
+            <Route path="/me/orders" element={<MyOrdersPage />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
