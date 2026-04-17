@@ -15,6 +15,7 @@ import OrderPage from './OrderPage';
 import InventoryPage from './InventoryPage';
 import ProfilePage from './ProfilePage';
 import MyOrdersPage from './MyOrdersPage';
+import TransactionPage from './TransactionPage';
 import MenuView from '../components/MenuView';
 import CreateOrderModal from '../components/CreateOrderModal';
 import './DashboardPage.css';
@@ -39,11 +40,12 @@ const DashboardPage = () => {
       icon: <SettingOutlined />,
       label: 'Tài Khoản của tôi',
     },
-    {
+    // Only show 'My Orders' if user is NOT an admin
+    ...(user?.permission !== 'admin' ? [{
       key: '6',
       icon: <FileTextOutlined />,
       label: 'Đơn Hàng Của Tôi',
-    },
+    }] : []),
     // Only show 'User Management' if user has 'admin' permission
     ...(user?.permission === 'admin' ? [{
       key: '2',
@@ -61,6 +63,11 @@ const DashboardPage = () => {
       key: '4',
       icon: <InboxOutlined />,
       label: 'Kho Hàng',
+    }] : []),
+    ...(user?.permission === 'admin' ? [{
+      key: '7',
+      icon: <FileTextOutlined />,
+      label: 'Quản Lý Giao Dịch',
     }] : []),
   ];
 
@@ -109,6 +116,8 @@ const DashboardPage = () => {
         return <ProfilePage />;
       case '6':
         return <MyOrdersPage />;
+      case '7':
+        return <TransactionPage />;
       default:
         return <div>Vui lòng chọn một mục</div>;
     }

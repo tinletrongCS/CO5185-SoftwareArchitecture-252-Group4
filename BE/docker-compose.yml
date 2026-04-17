@@ -22,7 +22,7 @@ services:
       - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c", "tr -d '\\r' < /entrypoint.sh > /tmp/entrypoint.sh && bash /tmp/entrypoint.sh"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SERVER_PORT=8082
@@ -41,7 +41,7 @@ services:
       - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c", "tr -d '\\r' < /entrypoint.sh > /tmp/entrypoint.sh && bash /tmp/entrypoint.sh"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SERVER_PORT=8083
@@ -49,7 +49,7 @@ services:
       - rabbitmq
     networks:
       - irms-network
-   
+
   inventory-service:
     image: eclipse-temurin:21-jdk-jammy
     container_name: irms-inventory-service
@@ -60,12 +60,29 @@ services:
       - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c", "tr -d '\\r' < /entrypoint.sh > /tmp/entrypoint.sh && bash /tmp/entrypoint.sh"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SERVER_PORT=8084
     depends_on:
       - rabbitmq
+    networks:
+      - irms-network
+
+  payment-service:
+    image: eclipse-temurin:21-jdk-jammy
+    container_name: irms-payment-service
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./payment_service:/app
+      - ./entrypoint.sh:/entrypoint.sh
+      - maven-cache:/root/.m2
+    working_dir: /app
+    entrypoint: ["/bin/bash", "-c", "tr -d '\\r' < /entrypoint.sh > /tmp/entrypoint.sh && bash /tmp/entrypoint.sh"]
+    environment:
+      - SERVER_PORT=8085
+      - ORDERING_SERVICE_URL=http://ordering-service:8082
     networks:
       - irms-network
 
@@ -79,13 +96,14 @@ services:
       - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c", "tr -d '\\r' < /entrypoint.sh > /tmp/entrypoint.sh && bash /tmp/entrypoint.sh"]
     environment:
       - SERVER_PORT=8081
     depends_on:
       - auth-service
       - ordering-service
       - inventory-service
+      - payment-service
     networks:
       - irms-network
 

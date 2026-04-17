@@ -45,3 +45,11 @@ export const userApi = {
   update: (id, data) => axiosInstance.put(`/auth/users/${id}`, data),
   delete: (id) => axiosInstance.delete(`/auth/users/${id}`),
 };
+
+export const paymentApi = {
+  createInvoice: (orderId) => axiosInstance.post(`/payment/invoice/${orderId}`),
+  getTaxConfig: () => axiosInstance.get('/payment/tax-config'),
+  updateTaxConfig: (data) => axiosInstance.put('/payment/tax-config', data),
+  getTransactions: () => axiosInstance.get('/payment/transactions'),
+  getTransactionByOrder: (orderId) => axiosInstance.get(`/payment/transactions/order/${orderId}`),
+};

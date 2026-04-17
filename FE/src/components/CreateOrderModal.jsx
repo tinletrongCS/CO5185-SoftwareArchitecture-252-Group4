@@ -200,6 +200,7 @@ const CreateOrderModal = ({ open, onCancel, onSuccess }) => {
         tableId: selectedTable ? selectedTable.tableName : String(selectedTableId),
         userName: values.userName,
         items: parsedItems,
+        totalPrice: calculateTotal(),
       }
 
       await orderApi.create(payload)
