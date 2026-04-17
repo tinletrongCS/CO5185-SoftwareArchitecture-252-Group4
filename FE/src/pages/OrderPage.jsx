@@ -45,9 +45,9 @@ const { Title, Text } = Typography
 import CreateOrderModal from '../components/CreateOrderModal'
 
 const STATUS_CONFIG = {
-  PENDING: { color: 'orange', label: 'Đang chờ', icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#faad14' }} /> },
-  COMPLETED: { color: 'green', label: 'Hoàn tất', icon: <CheckCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} /> },
-  CANCELLED: { color: 'red', label: 'Đã hủy', icon: <CloseCircleOutlined style={{ marginRight: 8, color: '#ff4d4f' }} /> },
+  PENDING: { color: 'processing', label: 'Đang phục vụ', icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#1890ff' }} /> },
+  COMPLETED: { color: 'success', label: 'Đã thanh toán', icon: <CheckCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} /> },
+  CANCELLED: { color: 'error', label: 'Đã hủy', icon: <CloseCircleOutlined style={{ marginRight: 8, color: '#ff4d4f' }} /> },
 }
 
 const ZONE_LABELS = {
@@ -145,6 +145,7 @@ function OrderPage() {
 
       message.success('Cập nhật trạng thái thành công')
       fetchOrders()
+      fetchAllTables()
     } catch {
       message.error('Cập nhật thất bại')
     }
@@ -371,8 +372,6 @@ function OrderPage() {
     )
   }
 
-  // renderMiniMapInModal was moved to CreateOrderModal
-
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
@@ -396,8 +395,8 @@ function OrderPage() {
       </div>
       <Spin spinning={loading}>
         <Row gutter={16}>
-          {renderColumn('PENDING', 'ĐANG CHỜ')}
-          {renderColumn('COMPLETED', 'HOÀN TẤT')}
+          {renderColumn('PENDING', 'ĐANG PHỤC VỤ')}
+          {renderColumn('COMPLETED', 'ĐÃ THANH TOÁN')}
           {renderColumn('CANCELLED', 'ĐÃ HỦY')}
         </Row>
       </Spin>
