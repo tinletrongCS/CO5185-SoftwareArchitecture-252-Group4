@@ -5,12 +5,16 @@ import {
   DashboardOutlined,
   LogoutOutlined,
   ShoppingCartOutlined,
-  InboxOutlined
+  InboxOutlined,
+  SettingOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import UserTable from '../components/UserTable';
 import OrderPage from './OrderPage';
 import InventoryPage from './InventoryPage';
+import ProfilePage from './ProfilePage';
+import MyOrdersPage from './MyOrdersPage';
 import MenuView from '../components/MenuView';
 import CreateOrderModal from '../components/CreateOrderModal';
 import './DashboardPage.css';
@@ -29,6 +33,16 @@ const DashboardPage = () => {
       key: '1',
       icon: <DashboardOutlined />,
       label: 'Tổng Quan',
+    },
+    {
+      key: '5',
+      icon: <SettingOutlined />,
+      label: 'Tài Khoản của tôi',
+    },
+    {
+      key: '6',
+      icon: <FileTextOutlined />,
+      label: 'Đơn Hàng Của Tôi',
     },
     // Only show 'User Management' if user has 'admin' permission
     ...(user?.permission === 'admin' ? [{
@@ -60,28 +74,28 @@ const DashboardPage = () => {
                 <Title level={3}>Xin chào, {user?.userName}!</Title>
                 {/* <Text type="secondary">Vai trò: {user?.permission}</Text> */}
               </div>
-              <Button 
-                type="primary" 
-                size="large" 
-                icon={<ShoppingCartOutlined />} 
+              <Button
+                type="primary"
+                size="large"
+                icon={<ShoppingCartOutlined />}
                 onClick={() => setOrderModalOpen(true)}
-                style={{ height: 42, borderRadius: 2, padding: '0 32px', fontSize: 16, fontWeight: 'bold', background: '#52c41a', color: '#ffffffff'}}
+                style={{ height: 42, borderRadius: 2, padding: '0 32px', fontSize: 16, fontWeight: 'bold', background: '#52c41a', color: '#ffffffff' }}
               >
                 Đặt món ngay
               </Button>
             </div>
-            
+
             {/* Show Menu for everyone in Overview, but it's the ONLY thing for regular users */}
             <Divider />
             <MenuView />
 
-            <CreateOrderModal 
-              open={orderModalOpen} 
-              onCancel={() => setOrderModalOpen(false)} 
+            <CreateOrderModal
+              open={orderModalOpen}
+              onCancel={() => setOrderModalOpen(false)}
               onSuccess={() => {
                 setOrderModalOpen(false);
                 message.success('Đơn hàng của bạn đã được tiếp nhận!');
-              }} 
+              }}
             />
           </div>
         );
@@ -91,6 +105,10 @@ const DashboardPage = () => {
         return <OrderPage />;
       case '4':
         return <InventoryPage />;
+      case '5':
+        return <ProfilePage />;
+      case '6':
+        return <MyOrdersPage />;
       default:
         return <div>Vui lòng chọn một mục</div>;
     }

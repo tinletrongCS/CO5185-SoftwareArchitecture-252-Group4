@@ -5,9 +5,16 @@ import com.irms.auth_service.dto.LoginResponse;
 import com.irms.auth_service.dto.UserDTO;
 import com.irms.auth_service.entity.UserEntity;
 import com.irms.auth_service.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -18,20 +25,36 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Value("${jwt.secret:mySecretKeyForJwtTokenGenerationWhichIsLongEnough}")
+    private String jwtSecret;
+
+    private static final long EXPIRATION_TIME = 86400000; // 24 hours
+
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     public LoginResponse login(LoginRequest request) {
         Optional<UserEntity> userOpt = userRepository.findByUsername(request.getUsername());
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
-            // In a real application, you would compare password hashes.
-            // Here, for this prototype, we're doing a simple string comparison.
-            if (user.getPassword().equals(request.getPassword())) {
+            if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 UserDTO userDTO = mapToDTO(user);
-                // Simple dummy token
-                String token = "dummy-jwt-token-" + user.getId();
+                String token = generateToken(user);
                 return new LoginResponse(token, userDTO);
             }
         }
         throw new RuntimeException("Invalid username or password");
+    }
+
+    private String generateToken(UserEntity user) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.builder()
+            .subject(String.valueOf(user.getId()))
+            .claim("username", user.getUsername())
+            .claim("permission", user.getRole())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+            .signWith(key)
+            .compact();
     }
 
     public List<UserDTO> getAllUsers() {
@@ -51,8 +74,11 @@ public class AuthService {
     public UserDTO createUser(UserDTO userDTO) {
         UserEntity user = new UserEntity();
         user.setUsername(userDTO.getUserName());
-        user.setPassword(userDTO.getPassword());
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setRole(userDTO.getPermission() != null ? userDTO.getPermission() : "user");
+        user.setFullname(userDTO.getFullname());
+        user.setPhone(userDTO.getPhone());
+        user.setEmail(userDTO.getEmail());
         user = userRepository.save(user);
         return mapToDTO(user);
     }
@@ -61,8 +87,15 @@ public class AuthService {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setUsername(userDTO.getUserName());
-        user.setPassword(userDTO.getPassword());
-        user.setRole(userDTO.getPermission() != null ? userDTO.getPermission() : "user");
+        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
+        if (userDTO.getPermission() != null && !userDTO.getPermission().isEmpty()) {
+            user.setRole(userDTO.getPermission());
+        }
+        user.setFullname(userDTO.getFullname());
+        user.setPhone(userDTO.getPhone());
+        user.setEmail(userDTO.getEmail());
         user = userRepository.save(user);
         return mapToDTO(user);
     }
@@ -72,6 +105,6 @@ public class AuthService {
     }
 
     private UserDTO mapToDTO(UserEntity user) {
-        return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getRole());
+        return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.getFullname(), user.getPhone(), user.getEmail());
     }
 }

@@ -1,6 +1,9 @@
 server:
   port: 8081
 
+jwt:
+  secret: mySecretKeyForJwtTokenGenerationWhichIsLongEnough
+
 spring:
   cloud:
     gateway:

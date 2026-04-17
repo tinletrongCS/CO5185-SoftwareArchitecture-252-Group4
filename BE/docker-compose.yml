@@ -19,9 +19,10 @@ services:
       - "8082:8082"
     volumes:
       - ./ordering_service:/app
+      - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    command: sh mvnw spring-boot:run
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SERVER_PORT=8082
@@ -37,9 +38,10 @@ services:
       - "8083:8083"
     volumes:
       - ./auth_service:/app
+      - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    command: ./mvnw spring-boot:run
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SERVER_PORT=8083
@@ -47,7 +49,7 @@ services:
       - rabbitmq
     networks:
       - irms-network
-  
+   
   inventory-service:
     image: eclipse-temurin:21-jdk-jammy
     container_name: irms-inventory-service
@@ -55,9 +57,10 @@ services:
       - "8084:8084"
     volumes:
       - ./inventory_service:/app
+      - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    command: ./mvnw spring-boot:run
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SERVER_PORT=8084
@@ -73,9 +76,10 @@ services:
       - "8081:8081"
     volumes:
       - ./gateway:/app
+      - ./entrypoint.sh:/entrypoint.sh
       - maven-cache:/root/.m2
     working_dir: /app
-    command: sh mvnw spring-boot:run
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       - SERVER_PORT=8081
     depends_on:
