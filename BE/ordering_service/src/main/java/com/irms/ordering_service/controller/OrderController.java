@@ -43,6 +43,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, value));
     }
 
+    @PutMapping("/{id}/final-price")
+    public ResponseEntity<OrderResponseDTO> updateFinalPrice(@PathVariable Long id,
+                                                              @RequestParam Float value) {
+        return ResponseEntity.ok(orderService.updateFinalPrice(id, value));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);

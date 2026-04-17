@@ -3,12 +3,15 @@ package com.irms.ordering_service.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import org.hibernate.query.Order;
 
-@Data
+@Getter
+@Setter
 @Table(name = "order_items")
 @Entity
 @NoArgsConstructor
@@ -36,6 +39,7 @@ public class OrderItemEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     @ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     @JsonIgnore
     private OrderEntity order;
 }

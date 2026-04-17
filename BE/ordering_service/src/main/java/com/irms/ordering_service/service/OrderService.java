@@ -12,6 +12,7 @@ public interface OrderService {
     List<OrderResponseDTO> getOrdersByUser(String userName);
     OrderResponseDTO getOrderById(Long id);
     OrderResponseDTO updateOrderStatus(Long id, String status);
+    OrderResponseDTO updateFinalPrice(Long id, Float finalPrice);
 
     void deleteOrder(Long id);
 }

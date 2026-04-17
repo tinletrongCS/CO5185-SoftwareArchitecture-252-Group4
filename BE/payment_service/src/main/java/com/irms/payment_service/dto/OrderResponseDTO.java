@@ -1,4 +1,4 @@
-package com.irms.ordering_service.dto;
+package com.irms.payment_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,11 +11,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderResponseDTO {
-
     private Long id;
     private String tableId;
     private String userName;
-    private List<OrderItemResponseDTO> items;
+    private List<OrderItemDTO> items;
     private Float totalPrice;
     private Float finalPrice;
     private LocalDateTime createdAt;
