@@ -73,4 +73,14 @@ public class AuthController {
         authService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getCurrentUser(@RequestHeader("X-User-Id") String userId) {
+        try {
+            Long id = Long.parseLong(userId);
+            return ResponseEntity.ok(authService.getUserById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

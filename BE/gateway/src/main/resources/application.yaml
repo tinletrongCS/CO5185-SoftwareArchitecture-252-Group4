@@ -1,6 +1,9 @@
 server:
   port: 8081
 
+jwt:
+  secret: mySecretKeyForJwtTokenGenerationWhichIsLongEnough
+
 spring:
   cloud:
     gateway:
@@ -21,6 +24,12 @@ spring:
           uri:  http://inventory-service:8084
           predicates:
             - Path=/inventory/**
+          filters:
+            - StripPrefix=1
+        - id: payment-service
+          uri: http://payment-service:8085
+          predicates:
+            - Path=/payment/**
           filters:
             - StripPrefix=1
       globalcors:

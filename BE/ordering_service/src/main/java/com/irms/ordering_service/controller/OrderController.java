@@ -27,6 +27,11 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
+    @GetMapping("/user/{userName}")
+    public ResponseEntity<List<OrderResponseDTO>> getOrdersByUser(@PathVariable String userName) {
+        return ResponseEntity.ok(orderService.getOrdersByUser(userName));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
@@ -36,6 +41,12 @@ public class OrderController {
     public ResponseEntity<OrderResponseDTO> updateStatus(@PathVariable Long id,
                                                           @RequestParam String value) {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, value));
+    }
+
+    @PutMapping("/{id}/final-price")
+    public ResponseEntity<OrderResponseDTO> updateFinalPrice(@PathVariable Long id,
+                                                              @RequestParam Float value) {
+        return ResponseEntity.ok(orderService.updateFinalPrice(id, value));
     }
 
     @DeleteMapping("/{id}")

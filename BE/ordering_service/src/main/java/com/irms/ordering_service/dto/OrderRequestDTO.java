@@ -8,5 +8,6 @@ public class OrderRequestDTO {
 
     private String tableId;
     private String userName;
+    private Float totalPrice;
     private List<OrderItemRequestDTO> items;
 }

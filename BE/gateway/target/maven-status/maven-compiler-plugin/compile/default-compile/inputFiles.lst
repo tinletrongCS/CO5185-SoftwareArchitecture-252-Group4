@@ -1,1 +1,2 @@
 /app/src/main/java/com/irms/gateway/GatewayApplication.java
+/app/src/main/java/com/irms/gateway/JwtAuthenticationFilter.java

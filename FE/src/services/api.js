@@ -2,6 +2,7 @@ import axiosInstance from './axiosInstance';
 
 export const orderApi = {
   getAll: () => axiosInstance.get('/orders'),
+  getByUser: (userName) => axiosInstance.get(`/orders/user/${userName}`),
   getById: (id) => axiosInstance.get(`/orders/${id}`),
   create: (data) => axiosInstance.post('/orders', data),
   update: (id, data) => axiosInstance.put(`/orders/${id}/status?value=${data.status}`),
@@ -39,7 +40,16 @@ export const userApi = {
   getAll: () => axiosInstance.get('/auth/users'),
   getById: (id) => axiosInstance.get(`/auth/users/${id}`),
   getByUsername: (username) => axiosInstance.get(`/auth/users/username/${username}`),
+  getMe: () => axiosInstance.get('/auth/me'),
   create: (data) => axiosInstance.post('/auth/users', data),
   update: (id, data) => axiosInstance.put(`/auth/users/${id}`, data),
   delete: (id) => axiosInstance.delete(`/auth/users/${id}`),
+};
+
+export const paymentApi = {
+  createInvoice: (orderId) => axiosInstance.post(`/payment/invoice/${orderId}`),
+  getTaxConfig: () => axiosInstance.get('/payment/tax-config'),
+  updateTaxConfig: (data) => axiosInstance.put('/payment/tax-config', data),
+  getTransactions: () => axiosInstance.get('/payment/transactions'),
+  getTransactionByOrder: (orderId) => axiosInstance.get(`/payment/transactions/order/${orderId}`),
 };

@@ -43,11 +43,13 @@ import { orderApi, inventoryApi, tableApi } from '../services/api'
 const { Title, Text } = Typography
 
 import CreateOrderModal from '../components/CreateOrderModal'
+import InvoiceModal from '../components/InvoiceModal'
 
 const STATUS_CONFIG = {
-  PENDING: { color: 'orange', label: 'Đang chờ', icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#faad14' }} /> },
-  COMPLETED: { color: 'green', label: 'Hoàn tất', icon: <CheckCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} /> },
-  CANCELLED: { color: 'red', label: 'Đã hủy', icon: <CloseCircleOutlined style={{ marginRight: 8, color: '#ff4d4f' }} /> },
+  PENDING: { color: 'processing', label: 'Đang phục vụ', icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#1890ff' }} /> },
+  AWAITING_PAYMENT: { color: 'warning', label: 'Chờ thanh toán', icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#faad14' }} /> },
+  COMPLETED: { color: 'success', label: 'Đã thanh toán', icon: <CheckCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} /> },
+  CANCELLED: { color: 'error', label: 'Đã hủy', icon: <CloseCircleOutlined style={{ marginRight: 8, color: '#ff4d4f' }} /> },
 }
 
 const ZONE_LABELS = {
@@ -78,6 +80,10 @@ function OrderPage() {
   // States cho Modal Tạo Đơn
   const [modalOpen, setModalOpen] = useState(false)
 
+  // States cho Invoice Modal
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
+  const [currentInvoiceOrder, setCurrentInvoiceOrder] = useState(null)
+
   // States cho danh sách bàn (tất cả bàn - dùng cho floor plan)
   const [allTables, setAllTables] = useState([])
   const [allTablesLoading, setAllTablesLoading] = useState(false)
@@ -88,15 +94,15 @@ function OrderPage() {
   const [orderDetails, setOrderDetails] = useState(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
 
-  const fetchOrders = async () => {
-    setLoading(true)
+  const fetchOrders = async (quiet = false) => {
+    if (!quiet) setLoading(true)
     try {
       const res = await orderApi.getAll()
       setOrders(res.data)
     } catch (err) {
-      message.error('Không thể tải danh sách đơn hàng')
+      if (!quiet) message.error('Không thể tải danh sách đơn hàng')
     } finally {
-      setLoading(false)
+      if (!quiet) setLoading(false)
     }
   }
 
@@ -115,6 +121,13 @@ function OrderPage() {
   useEffect(() => {
     fetchOrders()
     fetchAllTables()
+    
+    // Auto polling for SePAY webhook updates
+    const interval = setInterval(() => {
+        fetchOrders(true)
+    }, 10000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   const handleCreateOrderSuccess = () => {
@@ -145,16 +158,31 @@ function OrderPage() {
 
       message.success('Cập nhật trạng thái thành công')
       fetchOrders()
+      fetchAllTables()
     } catch {
       message.error('Cập nhật thất bại')
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (order) => {
     try {
-      await orderApi.delete(id)
-      message.success('Xóa đơn hàng thành công')
+      await orderApi.delete(order.id)
+      
+      // Tự động trả bàn khi xóa đơn
+      if (order.tableId) {
+        const matchedTable = allTables.find(t => t.tableName === order.tableId)
+        if (matchedTable) {
+          try {
+            await tableApi.updateStatus(matchedTable.id, true)
+          } catch (e) {
+            console.warn('Không thể trả bàn khi xóa đơn:', e)
+          }
+        }
+      }
+
+      message.success('Xóa đơn hàng và giải phóng bàn thành công')
       fetchOrders()
+      fetchAllTables()
     } catch {
       message.error('Xóa thất bại')
     }
@@ -246,7 +274,7 @@ function OrderPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <EnvironmentOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
-            <Title level={4} style={{ margin: 0, marginRight: 16 }}>Sơ đồ nhà hàng</Title>
+            <Title level={4} style={{ margin: 0, marginRight: 16 }}>Danh sách bàn</Title>
             <Space>
               <Tag color="green" style={{ borderRadius: 2 }}>{allTables.filter(t => t.available).length} trống</Tag>
               <Tag color="red" style={{ borderRadius: 2 }}>{allTables.filter(t => !t.available).length} đang dùng</Tag>
@@ -314,19 +342,21 @@ function OrderPage() {
           <Text type="secondary" style={{ fontSize: 12 }}>{order.userName || 'Ẩn danh'}</Text>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
-          <Space wrap size={[0, 4]}>
-            {(order.items || []).map((item, idx) => (
-              <Tag key={idx} style={{ fontSize: 11, borderRadius: 2 }}>
-                {item.itemName} x{item.quantity}
-              </Tag>
-            ))}
-          </Space>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text strong type="danger">{totalPrice.toLocaleString('vi-VN')} đ</Text>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           <Space>
+            {(order.status === 'PENDING' || order.status === 'AWAITING_PAYMENT') && (
+              <Button
+                size="small"
+                type="primary"
+                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                onClick={() => {
+                  setCurrentInvoiceOrder(order.id);
+                  setInvoiceModalOpen(true);
+                }}
+              >
+                Thanh toán
+              </Button>
+            )}
             <Button
               size="small"
               type="text"
@@ -344,7 +374,7 @@ function OrderPage() {
               </>
             )}
             {order.status !== 'PENDING' && (
-              <Popconfirm title="Xóa đơn hàng?" onConfirm={() => handleDelete(order.id)}>
+              <Popconfirm title="Xóa đơn hàng?" onConfirm={() => handleDelete(order)}>
                 <Button size="small" type="text" danger icon={<DeleteOutlined />} />
               </Popconfirm>
             )}
@@ -382,8 +412,6 @@ function OrderPage() {
     )
   }
 
-  // renderMiniMapInModal was moved to CreateOrderModal
-
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
@@ -403,12 +431,13 @@ function OrderPage() {
       {/* --- KANBAN BOARD --- */}
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
         <TableOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
-        <Title level={4} style={{ margin: 0 }}>Quản lý đơn hàng</Title>
+        <Title level={4} style={{ margin: 0 }}>Quản lý đơn đặt món</Title>
       </div>
       <Spin spinning={loading}>
         <Row gutter={16}>
-          {renderColumn('PENDING', 'ĐANG CHỜ')}
-          {renderColumn('COMPLETED', 'HOÀN TẤT')}
+          {renderColumn('PENDING', 'ĐANG PHỤC VỤ')}
+          {renderColumn('AWAITING_PAYMENT', 'CHỜ THANH TOÁN')}
+          {renderColumn('COMPLETED', 'ĐÃ THANH TOÁN')}
           {renderColumn('CANCELLED', 'ĐÃ HỦY')}
         </Row>
       </Spin>
@@ -427,7 +456,22 @@ function OrderPage() {
           setOrderDetails(null);
         }}
         footer={[
-          <Button key="close" type="primary" onClick={() => {
+          (selectedOrder?.status === 'PENDING' || selectedOrder?.status === 'AWAITING_PAYMENT') && (
+            <Button 
+              key="payment" 
+              type="primary" 
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+              onClick={() => {
+                setCurrentInvoiceOrder(selectedOrder.id);
+                setInvoiceModalOpen(true);
+                setDetailsModalOpen(false);
+                setOrderDetails(null);
+              }}
+            >
+              Thanh toán
+            </Button>
+          ),
+          <Button key="close" onClick={() => {
             setDetailsModalOpen(false);
             setOrderDetails(null);
           }}>
@@ -474,6 +518,17 @@ function OrderPage() {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onSuccess={handleCreateOrderSuccess}
+      />
+
+      {/* --- INVOICE MODAL --- */}
+      <InvoiceModal
+        open={invoiceModalOpen}
+        orderId={currentInvoiceOrder}
+        onClose={() => {
+            setInvoiceModalOpen(false)
+            setCurrentInvoiceOrder(null)
+            fetchOrders() // refresh data when closing
+        }}
       />
     </div>
   )
