@@ -99,8 +99,8 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRecordRepository.save(record);
         log.debug("Saved payment record for order: {}", orderId);
 
-        // 6. Generate QR URL
-        String description = "Thanh toan DH" + orderId;
+        // Liên kết với Vietinbank nên là sẽ có thêm SEVQR
+        String description = "SEVQR Thanh toan DH" + orderId;
         String qrUrl = UriComponentsBuilder.fromUriString(qrBaseUrl)
                 .queryParam("acc", bankAccountNumber)
                 .queryParam("bank", bankName)
