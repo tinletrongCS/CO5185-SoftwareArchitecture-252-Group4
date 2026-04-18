@@ -204,9 +204,7 @@ public class PaymentServiceImpl implements PaymentService {
                 Optional<PaymentRecordEntity> recordOpt = paymentRecordRepository.findByOrderId(orderId);
                 if (recordOpt.isPresent()) {
                     PaymentRecordEntity record = recordOpt.get();
-                    // Allowing small discrepancy or full match
                     if (payload.getTransferAmount() >= (record.getFinalPrice() - 100)) { // Flexible 100 VND
-                        // Update Order Status via order-service
                         try {
                             URI updateStatusUri = UriComponentsBuilder.fromUriString(orderingServiceUrl)
                                 .path("/{id}/status")
@@ -222,8 +220,7 @@ public class PaymentServiceImpl implements PaymentService {
                              System.err.println("Error updating order status: " + e.getMessage());
                         }
                     } else {
-                        // Partial payment or mismatched amount
-                        record.setStatus("FAILED"); // or PARTIAL
+                        record.setStatus("FAILED");
                         paymentRecordRepository.save(record);
                         System.out.println("Payment amount missing: Received " + payload.getTransferAmount() + " Expected " + record.getFinalPrice());
                     }
