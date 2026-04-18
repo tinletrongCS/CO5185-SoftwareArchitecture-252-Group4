@@ -21,7 +21,6 @@ public class WebhookController {
     @PostMapping
     public ResponseEntity<Map<String, Boolean>> receiveWebhook(@RequestBody SepayWebhookPayloadDTO payload) {
         paymentService.processWebhook(payload);
-        // Important: Return {"success": true} for SePAY to acknowledge
         return ResponseEntity.status(201).body(Map.of("success", true));
     }
 }
